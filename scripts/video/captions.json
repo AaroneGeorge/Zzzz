@@ -1,0 +1,33 @@
+{
+ "home": [
+  "ZecRecharge: an AI agent pays shielded testnet ZEC\nto a gateway that unlocks Bitrefill orders.",
+  "Spending bounded by a mandate it can't override:\n₹1,000 a day, auto-approve up to ₹500, Bitrefill only."
+ ],
+ "jio_search": "Request: “₹250 Swiggy gift card”.\n1. Search: live Bitrefill search (REAL).",
+ "jio_gate": "2. Policy gate, in code: budget, allow-list, caps.\nSmall amount: auto-approved.",
+ "jio_quote": [
+  "3. Quote: ZEC to USDC via NEAR Intents.\nA dry quote: nothing is swapped (QUOTE).",
+  "4. Gateway invoice. Testnet amount is a stand-in\nfor the quoted mainnet ZEC."
+ ],
+ "jio_pay": [
+  "5. The agent pays the gateway in shielded TAZ (testnet).\nThe memo ties the payment to the invoice and the policy.",
+  "6. Gateway verifies with a view-only key:\nmemo, amount, mined."
+ ],
+ "jio_deliver": [
+  "Verified. Only now is the Bitrefill order placed.\nThe gateway can't spend. It never learns the agent's address.",
+  "7. Bitrefill order: a free TEST gift-card product (TEST),\nnot a real Swiggy card. No real purchase."
+ ],
+ "explorer_link": "Open the same payment on the public testnet explorer…",
+ "explorer": "Same payment on the testnet explorer: shielded, block {JIO_HEIGHT}.\nAmount and memo are hidden.",
+ "amz_click": "Another run: ₹700 gift card. Above ₹500, so the agent must wait.",
+ "amz_confirm": "Above ₹500: waits for a human Confirm.\nWithout this click, nothing can be paid.",
+ "amz_run": "Same 7 steps after Confirm: shielded testnet payment,\nviewing-key verification, then a Bitrefill TEST order.",
+ "amz_reveal": "The delivered code is from a free Bitrefill TEST product,\nmasked until clicked. No real gift card was bought.",
+ "fk_search": "Third run: ₹1,500 Flipkart gift card.",
+ "fk_deny": "Above the cap: DENIED. No override.\nNo invoice, no payment.",
+ "mandate": "If the gateway can't verify in time, no order is placed. Tested live.",
+ "jio_deliver_failed": [
+  "Verified. Only now is the Bitrefill order placed.\nThe gateway can't spend. It never learns the agent's address.",
+  "7. Bitrefill's free TEST phone-refill order came back\n\"permanent_failure\": shown as not delivered (step 7 skipped)."
+ ]
+}

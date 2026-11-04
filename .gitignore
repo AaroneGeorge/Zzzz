@@ -3,3 +3,4 @@ node_modules/
 .secrets/
 data/*.jsonl
 *.log
+media/*.mp4
