@@ -11,5 +11,9 @@
     "wallet:selftest": "bun run scripts/wallet-selftest.ts",
     "bitrefill:selftest": "bun run scripts/bitrefill-selftest.ts"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
+    "@toon-format/toon": "^4.4.0"
+  }
 }

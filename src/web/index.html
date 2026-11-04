@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ZecRecharge · private agent payments with a budget</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #12151c; --panel2: #171b24; --line: #252b38; --text: #e8ebf2; --dim: #8b93a7; --faint: #5b6377;
+    --zec: #f4b728; --ok: #34d399; --fail: #f87171; --run: #fbbf24; --skip: #6b7280;
+    --real: #22c55e; --test: #22d3ee; --quote: #a78bfa; --fixture: #f59e0b; --mock: #9ca3af; --manual: #60a5fa;
+    --mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 18px; }
+  body { margin: 0; background: radial-gradient(1200px 500px at 10% -10%, #1a1630 0%, transparent 60%), var(--bg); color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.45; min-height: 100vh; }
+  header { display: flex; align-items: center; gap: 18px; padding: 22px 36px 10px; flex-wrap: wrap; }
+  .logo { width: 46px; height: 46px; border-radius: 12px; background: var(--zec); color: #111; display: grid; place-items: center; font-weight: 900; font-size: 26px; box-shadow: 0 0 30px #f4b72855; }
+  h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.02em; }
+  h1 small { display: block; font-size: 0.82rem; color: var(--dim); font-weight: 500; letter-spacing: 0; }
+  .chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { font: 600 0.72rem var(--mono); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); background: var(--panel); }
+  .chip b { color: var(--text); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 26px; padding: 12px 36px 40px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+  form.ask { display: flex; gap: 12px; padding: 16px; }
+  form.ask input { flex: 1; font-size: 1.15rem; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); outline: none; }
+  form.ask input:focus { border-color: var(--zec); box-shadow: 0 0 0 3px #f4b72833; }
+  button { font: inherit; cursor: pointer; border-radius: 12px; border: 0; padding: 14px 22px; font-weight: 700; }
+  .primary { background: var(--zec); color: #141414; }
+  .primary:disabled { opacity: .5; cursor: progress; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 16px; }
+  .presets button { background: var(--panel2); color: var(--dim); border: 1px solid var(--line); padding: 7px 12px; font-size: 0.8rem; font-weight: 600; }
+  .presets button:hover { color: var(--text); border-color: var(--faint); }
+  .runhead { display: flex; align-items: baseline; gap: 12px; margin: 22px 4px 10px; flex-wrap: wrap; }
+  .runhead .prompt { font-size: 1.2rem; font-weight: 700; }
+  .runhead .rid { font: 0.75rem var(--mono); color: var(--faint); }
+  .status { font: 800 0.78rem var(--mono); padding: 4px 10px; border-radius: 8px; letter-spacing: .04em; }
+  .st-running { background: #fbbf2422; color: var(--run); } .st-waiting_human { background: #fbbf2433; color: var(--run); animation: pulse 1.2s infinite; }
+  .st-done { background: #34d39922; color: var(--ok); } .st-denied, .st-rejected, .st-failed { background: #f8717122; color: var(--fail); }
+  @keyframes pulse { 50% { opacity: .55; } }
+
+  .confirm { display: none; margin: 0 0 16px; padding: 20px 22px; border-radius: 16px; border: 2px solid var(--run); background: linear-gradient(90deg, #3a2a0599, #12151c); }
+  .confirm.show { display: block; animation: pop .25s ease-out; }
+  @keyframes pop { from { transform: scale(.98); opacity: 0; } }
+  .confirm h3 { margin: 0 0 6px; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
+  .pause { width: 14px; height: 16px; border-left: 5px solid var(--run); border-right: 5px solid var(--run); display: inline-block; }
+  .notes .who { color: var(--zec); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; margin-right: 6px; }
+  .confirm p { margin: 0 0 14px; color: #f3e3b5; }
+  .confirm .yes { background: var(--ok); color: #05261a; margin-right: 10px; } .confirm .no { background: #2a2f3b; color: var(--text); }
+
+  ol.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+  ol.timeline::before { content: ""; position: absolute; left: 27px; top: 30px; bottom: 30px; width: 2px; background: var(--line); }
+  .step { position: relative; display: grid; grid-template-columns: 56px 1fr; gap: 14px; margin-bottom: 12px; }
+  .dot { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 1.2rem; background: var(--panel2); border: 2px solid var(--line); color: var(--faint); z-index: 1; transition: all .3s; }
+  .s-ok .dot { background: #0f2a20; border-color: var(--ok); color: var(--ok); }
+  .s-failed .dot { background: #2c1414; border-color: var(--fail); color: var(--fail); }
+  .s-running .dot { border-color: var(--run); color: var(--run); box-shadow: 0 0 0 6px #fbbf2418; animation: pulse 1s infinite; }
+  .s-skipped .dot { border-style: dashed; }
+  .body { padding: 14px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); transition: border-color .3s; min-width: 0; }
+  .s-ok .body { border-color: #1f4d3b; } .s-failed .body { border-color: #5b2323; } .s-running .body { border-color: #5c4a12; }
+  .s-pending .body, .s-skipped .body { opacity: .5; }
+  .title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .title strong { font-size: 1.12rem; }
+  .tool { font: 0.75rem var(--mono); color: var(--faint); }
+  .badge { margin-left: auto; font: 800 0.72rem var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 4px 10px; border-radius: 6px; color: #0b0d12; }
+  .m-real { background: var(--real); } .m-test { background: var(--test); } .m-quote { background: var(--quote); }
+  .m-fixture { background: var(--fixture); } .m-mock { background: var(--mock); } .m-manual { background: var(--manual); }
+  .summary { margin: 6px 0 2px; color: #cfd5e3; }
+  .err { margin-top: 6px; color: var(--fail); font: 0.85rem var(--mono); white-space: pre-wrap; }
+  .ids { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin-top: 8px; font: 0.8rem var(--mono); }
+  .ids dt { color: var(--faint); } .ids dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+  .links a { display: inline-block; margin-top: 8px; margin-right: 12px; color: var(--zec); font-weight: 700; text-decoration: none; }
+  .links a:hover { text-decoration: underline; }
+  .secret { margin-top: 10px; display: inline-flex; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--bg); border: 1px dashed var(--faint); cursor: pointer; font: 700 1rem var(--mono); }
+  .secret .lbl { font: 600 0.75rem var(--mono); color: var(--dim); }
+  .notes { margin-top: 18px; padding: 14px 18px; font-size: 0.92rem; color: #cfd5e3; }
+  .notes p { margin: 4px 0; } .notes .sys { color: var(--faint); font: 0.75rem var(--mono); }
+  .empty { padding: 50px 20px; text-align: center; color: var(--faint); }
+
+  aside .card { padding: 18px 20px; margin-bottom: 18px; }
+  aside h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); display: flex; justify-content: space-between; align-items: baseline; }
+  aside h2 span { font: 600 0.72rem var(--mono); color: var(--faint); text-transform: none; letter-spacing: 0; }
+  .big { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.03em; }
+  .big small { font-size: 1rem; color: var(--dim); font-weight: 600; }
+  .meter { height: 14px; border-radius: 999px; background: var(--panel2); overflow: hidden; margin: 10px 0 6px; border: 1px solid var(--line); }
+  .meter > div { height: 100%; background: linear-gradient(90deg, var(--ok), var(--zec)); transition: width .6s; }
+  .meter.hot > div { background: linear-gradient(90deg, var(--zec), var(--fail)); }
+  .row { display: flex; justify-content: space-between; font-size: 0.86rem; color: var(--dim); margin: 3px 0; }
+  .row b { color: var(--text); font-family: var(--mono); }
+  .cat { margin-top: 10px; } .cat .meter { height: 8px; margin: 4px 0 0; }
+  .rules { margin: 12px 0 0; padding: 0; list-style: none; font-size: 0.86rem; color: #cfd5e3; }
+  .rules li { padding: 5px 0; border-top: 1px solid var(--line); } .rules li b { font-family: var(--mono); color: var(--zec); }
+  .log { font: 0.72rem var(--mono); color: var(--dim); max-height: 230px; overflow: auto; }
+  .log div { padding: 4px 0; border-top: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .k-decision { color: var(--manual); } .k-human { color: var(--run); } .k-spend { color: var(--ok); } .k-deny { color: var(--fail); }
+  .legend { font-size: 0.78rem; color: var(--dim); display: grid; grid-template-columns: max-content 1fr; gap: 6px 10px; align-items: center; }
+  .legend .badge { margin: 0; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ⓩ</div>
+  <h1>ZecRecharge <small>An AI agent buys on Bitrefill with shielded ZEC, under a budget it cannot override</small></h1>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main>
+  <section>
+    <div class="card">
+      <form class="ask" id="ask">
+        <input id="prompt" autocomplete="off" value="Recharge +919999999999 with ₹239 Jio" aria-label="Request" />
+        <button class="primary" id="go" type="submit">Run agent ▸</button>
+      </form>
+      <div class="presets" id="presets"></div>
+    </div>
+
+    <div id="run"><div class="empty card">Type a request, or pick one above. Every step shows its ids and whether it is <b>real</b>, <b>test</b>, a <b>quote</b>, a <b>fixture</b>, a <b>mock</b> or <b>manual</b>.</div></div>
+  </section>
+
+  <aside>
+    <div class="card" id="policy"></div>
+    <div class="card"><h2>Audit log <span>data/ledger.jsonl · append-only</span></h2><div class="log" id="log"></div></div>
+    <div class="card">
+      <h2>Modes</h2>
+      <div class="legend">
+        <span class="badge m-real">real</span><span>live call / real money or real check</span>
+        <span class="badge m-test">test</span><span>Zcash testnet or Bitrefill test product</span>
+        <span class="badge m-quote">quote</span><span>price quote only, nothing swapped</span>
+        <span class="badge m-fixture">fixture</span><span>recorded response, no network</span>
+        <span class="badge m-mock">mock</span><span>simulated, nothing on chain</span>
+        <span class="badge m-manual">manual</span><span>a human did this step</span>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+const PRESETS = [
+  "Recharge +919999999999 with ₹239 Jio",
+  "₹700 Amazon Pay gift card for my mom",
+  "Recharge +918888888888 with ₹299 Airtel",
+  "₹1,500 Flipkart gift card",
+];
+let es = null, current = null, revealed = new Set();
+
+$("#presets").innerHTML = PRESETS.map((p) => `<button type="button">${esc(p)}</button>`).join("");
+$("#presets").addEventListener("click", (e) => { if (e.target.tagName === "BUTTON") { $("#prompt").value = e.target.textContent; $("#prompt").focus(); } });
+
+$("#ask").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const prompt = $("#prompt").value.trim();
+  if (!prompt) return;
+  $("#go").disabled = true;
+  revealed = new Set();
+  try {
+    const r = await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ prompt }) });
+    const { id, error } = await r.json();
+    if (error) throw new Error(error);
+    history.replaceState(null, "", "#" + id);
+    follow(id);
+  } catch (err) { alert(err.message); $("#go").disabled = false; }
+});
+
+function follow(id) {
+  if (es) es.close();
+  es = new EventSource("/api/events/" + id);
+  es.addEventListener("state", (ev) => { current = JSON.parse(ev.data); render(current); loadPolicy(); });
+  es.addEventListener("done", () => { es.close(); $("#go").disabled = false; loadPolicy(); });
+  es.onerror = () => { fetch("/api/state/" + id).then((r) => r.ok && r.json()).then((s) => s && render(s)); };
+}
+
+async function decide(approve) {
+  if (!current) return;
+  document.querySelectorAll(".confirm button").forEach((b) => (b.disabled = true));
+  await fetch("/api/confirm/" + current.id, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ approve }) });
+}
+
+function render(run) {
+  const waiting = run.status === "waiting_human";
+  const d = run.decision;
+  const appr = run.steps.find((s) => s.name === "approve");
+  const req = appr?.detail?.data?.request;
+  const steps = run.steps.map((s, i) => {
+    const dt = s.detail || {};
+    const ids = Object.entries(dt.ids || {}).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+    const links = (dt.links || []).map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join("");
+    const key = run.id + ":" + s.name;
+    const secret = dt.secret ? `<div class="secret" data-key="${esc(key)}" title="click to reveal"><span class="lbl">${esc(dt.secret.label)}</span>${revealed.has(key) ? esc(dt.secret.value) : "••••-••••-•••• · click to reveal"}</div>` : "";
+    return `<li class="step s-${s.status}">
+      <div class="dot">${s.status === "ok" ? "✓" : s.status === "failed" ? "✕" : s.status === "skipped" ? "–" : i + 1}</div>
+      <div class="body">
+        <div class="title"><strong>${i + 1}. ${esc(dt.title)}</strong><span class="tool">${esc(dt.tool)}</span>${dt.mode ? `<span class="badge m-${esc(dt.mode)}">${esc(dt.mode)}</span>` : ""}</div>
+        ${dt.summary ? `<div class="summary">${esc(dt.summary)}</div>` : s.status === "pending" ? `<div class="summary" style="color:var(--faint)">pending</div>` : ""}
+        ${dt.error ? `<div class="err">${esc(dt.error)}</div>` : ""}
+        ${ids ? `<dl class="ids">${ids}</dl>` : ""}
+        ${links ? `<div class="links">${links}</div>` : ""}
+        ${secret}
+      </div></li>`;
+  }).join("");
+  const notes = (run.notes || []).map((n) => n.startsWith("[") ? `<p class="sys">${esc(n)}</p>` : `<p><b class="who">Agent</b> ${esc(n)}</p>`).join("");
+  $("#run").innerHTML = `
+    <div class="runhead"><span class="prompt">“${esc(run.prompt)}”</span><span class="status st-${run.status}">${run.status.replace("_", " ").toUpperCase()}</span><span class="rid">${esc(run.id)} · agent=${esc(run.agentMode)}</span></div>
+    <div class="confirm ${waiting ? "show" : ""}">
+      <h3><span class="pause"></span>Human confirmation needed</h3>
+      <p>${req ? `${inr(req.amountInr)} ${esc(req.category.replace("_", " "))} from ${esc(req.merchant)} is above the auto-approve limit.` : "This purchase is above the auto-approve limit."} ${d ? `Budget today: ${inr(d.spentTodayInr)} spent, ${inr(d.remainingInr)} left.` : ""} The agent cannot continue without you.</p>
+      <button class="yes" onclick="decide(true)">Confirm purchase</button><button class="no" onclick="decide(false)">Reject</button>
+    </div>
+    <ol class="timeline">${steps}</ol>
+    ${run.error ? `<div class="card notes"><p class="err">${esc(run.error)}</p></div>` : ""}
+    ${notes ? `<div class="card notes">${notes}</div>` : ""}`;
+  if (run.finishedAt) $("#go").disabled = false;
+}
+
+$("#run").addEventListener("click", (e) => {
+  const s = e.target.closest(".secret");
+  if (!s || !current) return;
+  const k = s.dataset.key;
+  revealed.has(k) ? revealed.delete(k) : revealed.add(k);
+  render(current);
+});
+
+async function loadPolicy() {
+  const p = await (await fetch("/api/policy")).json();
+  const c = p.config;
+  $("#chips").innerHTML = [
+    ["agent", c.agentMode === "llm" ? `llm · ${c.model}` : "scripted"], ["bitrefill", c.bitrefillMode], ["wallet", c.walletKind], ["zcash", c.network],
+  ].map(([k, v]) => `<span class="chip">${k} <b>${esc(v)}</b></span>`).join("");
+  const pct = Math.min(100, (p.spentTodayInr / p.dailyBudgetInr) * 100);
+  const cats = Object.entries(p.byCategory).map(([k, v]) => {
+    const cp = Math.min(100, (v.spentInr / v.capInr) * 100);
+    return `<div class="cat"><div class="row"><span>${esc(k.replace("_", " "))}</span><b>${inr(v.spentInr)} / ${inr(v.capInr)}</b></div><div class="meter ${cp > 80 ? "hot" : ""}"><div style="width:${cp}%"></div></div></div>`;
+  }).join("");
+  $("#policy").innerHTML = `
+    <h2>Spending mandate <span>sha256 ${esc(p.policyHash8)}…</span></h2>
+    <div class="big">${inr(p.remainingInr)} <small>left today</small></div>
+    <div class="meter ${pct > 80 ? "hot" : ""}"><div style="width:${pct}%"></div></div>
+    <div class="row"><span>Spent today (IST)</span><b>${inr(p.spentTodayInr)} of ${inr(p.dailyBudgetInr)}</b></div>
+    ${cats}
+    <ul class="rules">
+      <li>Auto-approve up to <b>${inr(p.confirmAboveInr)}</b>; above that a human must click Confirm</li>
+      <li>Merchants: <b>${esc(p.policy.merchantAllowList.join(", "))}</b> only</li>
+      <li>Max per purchase <b>${inr(p.policy.perTxMaxInr)}</b> · enforced in code before every payment and order</li>
+      <li>Every shielded memo carries <b>ZR1|invoice|${esc(p.policyHash8)}</b></li>
+    </ul>`;
+  $("#log").innerHTML = p.recent.slice().reverse().map((e) => {
+    const t = new Date(e.ts).toLocaleTimeString("en-IN", { hour12: false });
+    const cls = e.kind === "decision" && e.allowed === false ? "k-deny" : "k-" + e.kind;
+    const what = e.kind === "decision" ? (e.allowed ? (e.needsHuman ? "needs human" : "auto-approved") : "DENIED")
+      : e.kind === "human" ? (e.approved ? "human confirmed" : "human rejected")
+      : `paid ${e.mode || ""} ${e.txid ? e.txid.slice(0, 10) + "…" : ""}`;
+    return `<div title="${esc(JSON.stringify(e))}">${t} <span class="${cls}">${esc(e.kind.padEnd(8))}</span> ${inr(e.amountInr)} ${esc(e.category)} · ${esc(what)}</div>`;
+  }).join("") || `<div>empty</div>`;
+}
+
+loadPolicy();
+const h = location.hash.slice(1);
+if (h) fetch("/api/state/" + h).then((r) => r.ok && r.json()).then((s) => { if (s) { current = s; render(s); if (!s.finishedAt && !location.search.includes("nosse")) follow(h); } });
+</script>
+</body>
+</html>

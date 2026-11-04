@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "name": "ZecRecharge default mandate",
+  "timezone": "Asia/Kolkata",
+  "dailyBudgetInr": 1000,
+  "perTxMaxInr": 1000,
+  "confirmAboveInr": 500,
+  "merchantAllowList": ["bitrefill"],
+  "categoryCapsInr": {
+    "mobile_topup": 600,
+    "gift_card": 1000
+  },
+  "notes": "Daily budget resets at midnight IST. Anything above confirmAboveInr waits for a human click. The agent cannot edit this file; its sha256 goes into every shielded memo."
+}
