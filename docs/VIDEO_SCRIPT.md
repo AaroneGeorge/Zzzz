@@ -1,42 +1,45 @@
-# Video script (2:00 maximum)
+# Video script (2:00 maximum, captions only, no voice)
 
-Read slowly. About 2 words per second, with pauses at the cuts. Narration total is about 210 words. If you run long, drop the sentences marked (optional).
+The final cut is built from on-screen captions. It can be produced by hand or by a script, with or without audio. Each caption stays up 3 to 6 seconds, in large type, at the bottom third of the screen. Use short sentences.
 
-Placeholders: replace `{{ZEC_TXID}}` with the real testnet txid in shot 5 (open the explorer URL before recording).
+**The wait.** Steps 5 and 6 (pay and verify) take about 1.5 to 2.5 minutes in real time (testnet blocks come every 30 to 75 s). Do not show it all. Record the full run, then in the edit **speed up 8x (or cut) the wait** between "broadcast" and "mined at height N". Keep a visible caption on screen during the cut: **"Sped up: the real wait was about 2 minutes (testnet blocks)."** Do not hide the cut, and keep the step timeline visible so the viewer sees it is the same run.
+
+Placeholder: the final cut shows the txid `0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f` (explorer page for it opened in a browser tab beforehand; plain `curl` gets HTTP 403).
 
 ## Pre-recording checklist
 
-1. Time: finish recording by 22:30 IST.
-2. `cd /home/lechuuu/hackathons/freesociety/app`
-3. Reset the ledger so the budget shows ₹1,000: `bun run demo -- --reset-ledger`
-4. Environment for the recording (set in `.env` or the shell). With the real wallet:
-   `ZEC_WALLET=zingo ZEC_NETWORK=testnet BITREFILL_MODE=offline AGENT_MODE=scripted` (use `BITREFILL_MODE=test` only if the key works and a test order succeeded earlier today).
-   If the wallet is not ready, use `ZEC_WALLET=mock` and do not show it as a real send; show the pre-made txid page instead and say it is from an earlier run.
-5. Check the wallet has TAZ: `ZEC_WALLET=zingo bun run wallet:selftest -- --memos-only`
-6. Start the server: `bun run serve` and open `http://localhost:3000`. Zoom the browser to 125%.
-7. Open in other tabs: the testnet explorer page `https://testnet.zcashexplorer.app/transactions/{{ZEC_TXID}}`, and `data/policy.json` in an editor.
-8. Open a terminal with a large font, in the app folder, ready for `ZEC_WALLET=zingo bun run wallet:selftest`.
-9. Do one dry run of each preset, then reset the ledger again (step 3).
-10. Close chat, email and notification windows. Make sure no `.env` or key is on screen.
+Full version in `docs/integration.md`. Finish recording well before the 00:00 IST deadline.
 
-## Shot list
+1. `cd /home/lechuuu/hackathons/freesociety/app`; check `ls .secrets/zingo-testnet/.zr-session.lock` does not exist.
+2. `bun run demo -- --reset-ledger` so the mandate panel shows ₹1,000 left.
+3. Split notes so back-to-back takes do not wait for change: `bun run wallet:split -- 6 5000000`, then wait about 5 minutes. Repeat after 4 to 5 takes.
+4. Env: `export AGENT_MODE=llm ZEC_WALLET=zingo BITREFILL_MODE=test` (keys come from `.env`). Never show `.env` on screen.
+5. `bun run serve`, open `http://localhost:3000` at 125% zoom. Check the chips: `agent llm`, `bitrefill test`, `wallet zingo`, `gateway view-only UFVK`.
+6. Open the explorer tab for the txid above, and `data/policy.json` in an editor.
+7. Do one take per preset (never mix txids from different takes in one cut). Close chat and notification windows.
 
-| Time | Shot (what is on screen) | Narration (read exactly) |
+## Shot list (captions)
+
+| Time | On screen | Caption (exact text) |
 |---|---|---|
-| 0:00 to 0:12 | Title card: "ZecRecharge". Then the web UI home with the mandate panel (₹1,000 left). | "Zcash has private rails, but few shops accept it. And AI agents need money with limits. ZecRecharge is an agent that buys from Bitrefill with shielded ZEC, inside a budget it cannot override." |
-| 0:12 to 0:30 | Click preset **₹239 Jio**. Timeline step 1: search results appear, badge REAL. | "I type: recharge my phone with two hundred thirty-nine rupees Jio. The agent searches Bitrefill live, using the hosted MCP. This step is real." |
-| 0:30 to 0:42 | Step 2 turns green: "allowed", no confirm. Budget meter drops to ₹761. | "The policy gate checks the budget, the allow-list and the category cap. Small amount, so it is approved automatically." |
-| 0:42 to 0:56 | Click preset **₹700 Amazon Pay**. Confirm card appears. Click Confirm. | "Now seven hundred rupees. That is above my limit, so the agent must wait. I click Confirm. Without my click, nothing can be paid." |
-| 0:56 to 1:06 | Click preset **₹1,500 Flipkart**. Red "denied" card with the reason. | "Fifteen hundred rupees is over the cap. It is denied, and no one can override it, not even the model." |
-| 1:06 to 1:28 | Switch to terminal: run `ZEC_WALLET=zingo bun run wallet:selftest`. Show the output: txid, memo `ZR1|…|…`. | "Next, the payment. The agent sends a shielded Zcash transaction on testnet. The memo holds the Bitrefill invoice id and a hash of the policy. The wallet decrypts it, so you can see it here." |
-| 1:28 to 1:38 | Browser tab: testnet explorer page for `{{ZEC_TXID}}`. | "Here is the same transaction on the testnet explorer. Amount and memo are hidden on chain." |
-| 1:38 to 1:50 | Back to the UI, run timeline: step 4 QUOTE badge, step 6 FIXTURE or TEST badge. Point to the legend. | "The swap to USDC is only a quote. The order is a test or fixture, and the badges say so. We never call a fake a payment." |
-| 1:50 to 2:00 | Show the audit ledger panel, then the card: "30 days: real mainnet swap + Telegram". | "Honest status: shielded send and policy gate are real. Next, we make the swap real on mainnet. ZecRecharge. Thank you." |
+| 0:00 to 0:08 | Title card, then the web UI with the mandate panel (₹1,000 left) and the chips. | "ZecRecharge: an AI agent that pays for Bitrefill with shielded ZEC." / "Spending bounded by a mandate it can't override." |
+| 0:08 to 0:16 | Click **₹239 Jio**. Step 1 appears, badge REAL. | "1. Search: live Bitrefill search (REAL)." |
+| 0:16 to 0:24 | Step 2 turns green, budget meter drops. | "2. Policy gate, in code: budget, allow-list, caps. Small amount: auto-approved." |
+| 0:24 to 0:32 | Step 3, QUOTE badge. | "3. Quote: ZEC to USDC via NEAR Intents. A dry quote: nothing is swapped (QUOTE)." |
+| 0:32 to 0:40 | Step 4: gateway invoice, with the "testnet stand-in" label. | "4. Gateway invoice. Testnet amount is a stand-in for the quoted mainnet ZEC." |
+| 0:40 to 0:55 | Step 5: "broadcasting", then "waiting for a block". Show the memo `ZR1\|<invoice>\|<hash8>`. | "5. The agent pays the gateway in shielded TAZ (testnet). Memo ties the payment to the invoice and the policy." |
+| 0:55 to 1:15 | Step 6 with "Gateway sees tx in the mempool", poll counter. Sped-up wait. | "6. Gateway verifies with a view-only key: memo, amount, mined." / "Sped up: the real wait was about 2 minutes (testnet blocks)." |
+| 1:15 to 1:25 | Step 6 turns OK: "mined at height N". Then step 7 starts. Show the privacy facts list. | "Verified. Only now is the Bitrefill order placed." / "The gateway can't spend. It never learns the agent's address." |
+| 1:25 to 1:33 | Step 7 done, badge TEST, code masked. | "7. Bitrefill order: a free TEST product (TEST). No real purchase." |
+| 1:33 to 1:40 | Browser tab: explorer page for `0863ac32…fa93f`. | "Same payment on the testnet explorer: shielded, block 4,582,167. Amount and memo are hidden." |
+| 1:40 to 1:48 | Click **₹700 Amazon Pay**: Confirm card appears (cut straight to it). Then **₹1,500 Flipkart**: red "denied". | "Above ₹500: waits for a human Confirm." / "Above the cap: DENIED. No override." |
+| 1:48 to 1:54 | Terminal or slide: the negative test. | "If the gateway can't verify in time, no order is placed. Tested live." |
+| 1:54 to 2:00 | Final card. | "Testnet only. Orders are free test products. No mainnet payment." / "Next: mainnet settlement + Telegram. ZecRecharge." |
 
-## Notes for the presenter
+## Notes for the editor
 
-- Say "testnet" clearly in shot 6. The judges need to hear it.
-- If the Bitrefill key works and the deliver step shows a test code, add in shot 8: "This order is a free Bitrefill test product." If not, say "fixture" as written.
-- If a step is slow, keep talking over it; do not cut to a different run. Use only runs from this recording session so the ids match.
-- Pronunciation: "Zcash" (zee-cash), "Bitrefill" (bit-ree-fill), "shielded" (sheel-did), "mandate" (man-date).
-- Export as MP4, upload as YouTube unlisted or Drive with link access, then paste the link into `{{VIDEO_URL}}` in the README and the form.
+- Every badge must stay legible (REAL, QUOTE, TEST). Do not crop them out.
+- Show the Confirm click for ₹700 only as a short clip; it uses its own take and its own txid, so do not claim it is the same run. If the cut shows a second run, say so in a caption ("another run").
+- If a step fails in a take (for example, the quote falls back to a labelled FIXTURE on a tiny amount), keep it in: the badge says what it is.
+- The Amazon Pay preset matches `amazon-fresh-india` on Bitrefill search with a key. That is real behaviour (logged in the feedback doc); do not caption it as an Amazon Pay card purchase.
+- Export MP4, upload as YouTube unlisted or Drive with link access, then paste the link into `{{VIDEO_URL}}` in the README and the form.
