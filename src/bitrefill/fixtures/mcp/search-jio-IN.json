@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-11-04T12:59:00.064Z",
+  "source": "bitrefill hosted MCP, guest client_credentials token",
+  "tool": "search-products",
+  "args": {
+    "query": "jio",
+    "country": "IN",
+    "intent": "recharge an Indian Jio prepaid number"
+  },
+  "isError": false,
+  "text": "categories[4]{count,highlighted,value}:\n  1,food,food\n  1,refill,refill\n  1,groceries,groceries\n  1,electronics,electronics\nproducts[3]:\n  - _id: reliance-jio-india-bundles\n    categories[1]: refill\n    countries[1]: IN\n    currency: INR\n    in_stock: true\n    keywords[0]:\n    name: Jio Bundles India\n    slug: reliance-jio-india-bundles\n    type: refills\n    product_url: \"https://www.bitrefill.com/reliance-jio-india-bundles/\"\n  - _id: my-jio-store-india\n    categories[1]: electronics\n    countries[1]: IN\n    currency: INR\n    in_stock: true\n    keywords[2]: phones,gadgets\n    name: My Jio Store India\n    slug: my-jio-store-india\n    type: giftcards\n    product_url: \"https://www.bitrefill.com/my-jio-store-india/\"\n  - _id: jiomart-india\n    categories[2]: food,groceries\n    countries[1]: IN\n    currency: INR\n    in_stock: true\n    keywords[0]:\n    name: Reliance JioMart India\n    slug: jiomart-india\n    type: giftcards\n    product_url: \"https://www.bitrefill.com/jiomart-india/\"\nfound: 3\npage: 1\nper_page: 25"
+}

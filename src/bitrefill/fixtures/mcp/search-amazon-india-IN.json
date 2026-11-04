@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-11-04T12:59:00.548Z",
+  "source": "bitrefill hosted MCP, guest client_credentials token",
+  "tool": "search-products",
+  "args": {
+    "query": "amazon india",
+    "country": "IN",
+    "intent": "buy an Amazon India gift card"
+  },
+  "isError": false,
+  "text": "categories[4]{count,highlighted,value}:\n  1,food,food\n  1,streaming,streaming\n  1,food-delivery,food-delivery\n  1,entertainment,entertainment\nproducts[2]:\n  - _id: amazon-fresh-india\n    categories[2]: food,food-delivery\n    countries[1]: IN\n    currency: INR\n    in_stock: true\n    keywords[0]:\n    name: Amazon Fresh India\n    slug: amazon-fresh-india\n    type: giftcards\n    product_url: \"https://www.bitrefill.com/amazon-fresh-india/\"\n  - _id: amazon-prime-subscription-india\n    categories[2]: entertainment,streaming\n    countries[1]: IN\n    currency: INR\n    in_stock: true\n    keywords[0]:\n    name: Amazon Prime Subscription India\n    slug: amazon-prime-subscription-india\n    type: giftcards\n    product_url: \"https://www.bitrefill.com/amazon-prime-subscription-india/\"\nfound: 2\npage: 1\nper_page: 25"
+}

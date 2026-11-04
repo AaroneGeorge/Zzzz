@@ -1,0 +1,46 @@
+{
+  "recordedAt": "2026-11-04T12:59:04.975Z",
+  "source": "POST https://1click.chaindefuser.com/v0/quote (dry:true)",
+  "response": {
+    "quote": {
+      "amountIn": "238082",
+      "amountInFormatted": "0.00238082",
+      "amountInUsd": "3.043949794600",
+      "minAmountIn": "235701",
+      "amountOut": "3000000",
+      "amountOutFormatted": "3.0",
+      "amountOutUsd": "2.998332000000",
+      "minAmountOut": "3000000",
+      "timeEstimate": 459,
+      "refundFee": "32000",
+      "withdrawFee": "2400"
+    },
+    "quoteRequest": {
+      "dry": true,
+      "depositMode": "SIMPLE",
+      "swapType": "EXACT_OUTPUT",
+      "slippageTolerance": 100,
+      "originAsset": "nep141:zec.omft.near",
+      "depositType": "ORIGIN_CHAIN",
+      "destinationAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+      "amount": "3000000",
+      "refundTo": "t1Hsc1LR8yKnbbe3twRp88p6vFfC5t7DLbs",
+      "refundType": "ORIGIN_CHAIN",
+      "recipient": "0x480CD46E6faDe651a0437DeaddA53D5c8e7D846A",
+      "recipientType": "DESTINATION_CHAIN",
+      "deadline": "2026-11-04T13:29:01.265Z",
+      "confidentiality": "public",
+      "quoteWaitingTimeMs": 3000,
+      "insured": false,
+      "appFees": [
+        {
+          "recipient": "5880ad2b362620fadf759cbceb1cd5737ce8c6ed7fb8e9942881e6731f9247dd",
+          "fee": 20
+        }
+      ]
+    },
+    "signature": "ed25519:4uwPZGFbbNCo9rXYQRbdyeewYUctaCQmB5qTJe6RcpbKMAKo2ShLrecWmuHGb1bbYpmb7ErM5cbG8kRXmJrZHtGM",
+    "timestamp": "2026-11-04T12:59:01.549Z",
+    "correlationId": "96a5b374-f61c-4c9a-9f02-ee2e302b18f9"
+  }
+}

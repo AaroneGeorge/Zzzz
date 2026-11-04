@@ -1,0 +1,10 @@
+{
+  "recordedAt": "2026-11-04T12:59:01.264Z",
+  "source": "bitrefill hosted MCP, guest client_credentials token",
+  "tool": "get-product-details",
+  "args": {
+    "product_id": "test-gift-card-code"
+  },
+  "isError": true,
+  "text": "error: Product 'test-gift-card-code' was not found.\ncode: RESOURCE_NOT_FOUND\ndetails:\n  suggestions[1]{slug,name,product_url}:\n    test-kitchen-philippines,Test Kitchen Philippines,\"https://www.bitrefill.com/test-kitchen-philippines/\"\n  status: product_not_found"
+}
