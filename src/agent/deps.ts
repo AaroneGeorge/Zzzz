@@ -93,6 +93,22 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
   };
 }
 
+/**
+ * What actually runs, after any fallback (for the CLI header and the web chips). ZEC_WALLET=zingo with a wallet
+ * init error (e.g. ZEC_NETWORK=mainnet) runs the fake wallet; say so instead of echoing the requested kind.
+ */
+export function effectiveModes(cfg: Pick<AgentConfig, "walletKind" | "network" | "bitrefillMode">, sources?: AgentDeps["sources"]) {
+  const walletFallback = sources?.wallet === "fake" && cfg.walletKind !== "mock";
+  const bitrefillFallback = sources?.bitrefill === "fake" && cfg.bitrefillMode !== "offline";
+  return {
+    wallet: sources?.wallet === "fake" ? (walletFallback ? `mock (fallback from ${cfg.walletKind})` : "mock") : cfg.walletKind,
+    network: walletFallback ? `none (mock wallet; ${cfg.network} requested)` : cfg.network,
+    bitrefill: bitrefillFallback ? `fixture (fallback from ${cfg.bitrefillMode})` : cfg.bitrefillMode,
+    walletFallback,
+    bitrefillFallback,
+  };
+}
+
 const rel = (p: string) => new URL(p, import.meta.url).href;
 
 /**

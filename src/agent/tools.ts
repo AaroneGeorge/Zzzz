@@ -289,7 +289,7 @@ export class AgentTools {
       if (input.invoice_id && input.invoice_id !== g.id) throw new ToolError(`invoice ${input.invoice_id} is not this run's invoice (${g.id})`);
       if (this.payment) throw new ToolError("already paid");
       const memo = gate.memo(g.id);
-      const real = this.cfg.walletKind === "zingo";
+      const real = this.cfg.walletKind === "zingo" && this.deps.sources?.wallet !== "fake";
       this.setStep("pay", "running", {
         mode: real ? "test" : undefined,
         summary: real

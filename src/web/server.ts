@@ -1,7 +1,7 @@
 // bun run serve  →  http://localhost:3000
 import { join } from "node:path";
 import { checkPost } from "./guard";
-import { configFromEnv, createDefaultDeps, newRunId, runAgent, type AgentRun } from "../agent";
+import { configFromEnv, createDefaultDeps, effectiveModes, newRunId, runAgent, type AgentRun } from "../agent";
 
 const PORT = Number(process.env.PORT || 3000);
 // Loopback by default: the run and Confirm endpoints have no auth. HOST=0.0.0.0 opts in to LAN exposure.
@@ -13,6 +13,7 @@ const deps = await createDefaultDeps().catch((e: Error) => {
   console.error(`error: ${e.message}`);
   process.exit(1);
 });
+const eff = effectiveModes(cfg, deps.sources);
 const runs = new Map<string, AgentRun>();
 const listeners = new Map<string, Set<(r: AgentRun) => void>>();
 const pendingConfirm = new Map<string, (ok: boolean) => void>();
@@ -126,7 +127,8 @@ const server = Bun.serve({
         ...deps.policy.status(),
         sources: deps.sources,
         warnings: deps.warnings,
-        config: { agentMode: cfg.agentMode, model: cfg.model, bitrefillMode: cfg.bitrefillMode, walletKind: cfg.walletKind, network: cfg.network, gateway: deps.gateway.view, gatewayAddress: deps.gateway.address },
+        // chips show what actually runs after any fallback; the requested values are kept for reference
+        config: { agentMode: cfg.agentMode, model: cfg.model, bitrefillMode: eff.bitrefill, walletKind: eff.wallet, network: eff.network, requested: { bitrefillMode: cfg.bitrefillMode, walletKind: cfg.walletKind, network: cfg.network }, gateway: deps.gateway.view, gatewayAddress: deps.gateway.address },
       });
     }
     if (req.method === "GET" && p === "/api/runs") {
@@ -137,5 +139,5 @@ const server = Bun.serve({
 });
 
 console.log("Agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order (testnet + Bitrefill test products)");
-console.log(`ZecRecharge UI on http://${HOST === "0.0.0.0" || HOST === "::" ? "localhost" : HOST.includes(":") ? `[${HOST}]` : HOST}:${server.port}${HOST === "0.0.0.0" || HOST === "::" ? " (bound to all interfaces: no auth, anyone on your network can run and confirm)" : ""}  (agent=${cfg.agentMode}, bitrefill=${cfg.bitrefillMode}, wallet=${cfg.walletKind}, gateway=${deps.gateway.view}, sources=${JSON.stringify(deps.sources)})`);
+console.log(`ZecRecharge UI on http://${HOST === "0.0.0.0" || HOST === "::" ? "localhost" : HOST.includes(":") ? `[${HOST}]` : HOST}:${server.port}${HOST === "0.0.0.0" || HOST === "::" ? " (bound to all interfaces: no auth, anyone on your network can run and confirm)" : ""}  (agent=${cfg.agentMode}, bitrefill=${eff.bitrefill}, wallet=${eff.wallet}, gateway=${deps.gateway.view}, sources=${JSON.stringify(deps.sources)})`);
 for (const w of deps.warnings) console.log(`  note: ${w}`);

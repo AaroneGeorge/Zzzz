@@ -3,7 +3,7 @@
 // Flags: --yes / --no (answer the human-confirm prompt), --reset-ledger (operator: archive today's ledger), --json
 import { createInterface } from "node:readline/promises";
 import { FileLedger, DEFAULT_LEDGER_PATH } from "./policy";
-import { configFromEnv, createDefaultDeps, runAgent, type AgentRun, type StepDetail } from "./agent";
+import { configFromEnv, createDefaultDeps, effectiveModes, runAgent, type AgentRun, type StepDetail } from "./agent";
 
 import { promptFromArgs } from "./agent/parse";
 
@@ -34,7 +34,8 @@ async function main() {
   const cfg = configFromEnv();
   const deps = await createDefaultDeps({ ledgerPath });
   console.log(c("90", TAGLINE));
-  console.log(c("1", `ZecRecharge · agent=${cfg.agentMode} · bitrefill=${cfg.bitrefillMode} · wallet=${cfg.walletKind} · gateway=${deps.gateway.view} · network=${cfg.network}`));
+  const eff = effectiveModes(cfg, deps.sources);
+  console.log(c("1", `ZecRecharge · agent=${cfg.agentMode} · bitrefill=${eff.bitrefill} · wallet=${eff.wallet} · gateway=${deps.gateway.view} · network=${eff.network}`));
   console.log(`sources: wallet=${deps.sources.wallet} bitrefill=${deps.sources.bitrefill} bridge=${deps.sources.bridge} · policy ${deps.policy.hash8}`);
   for (const w of deps.warnings) console.log(c("90", `  note: ${w}`));
   console.log(`request: "${prompt}"\n`);
