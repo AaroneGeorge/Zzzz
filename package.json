@@ -1,0 +1,15 @@
+{
+  "name": "zecrecharge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An AI agent that buys real Indian goods on Bitrefill with shielded ZEC, under a budget mandate it cannot override.",
+  "scripts": {
+    "test": "bun test",
+    "demo": "bun run src/cli.ts",
+    "serve": "bun run src/web/server.ts",
+    "wallet:selftest": "bun run scripts/wallet-selftest.ts",
+    "bitrefill:selftest": "bun run scripts/bitrefill-selftest.ts"
+  },
+  "license": "MIT"
+}
