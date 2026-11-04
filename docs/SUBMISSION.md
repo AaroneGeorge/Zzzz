@@ -1,90 +1,100 @@
-# Stadium submission text (copy-paste)
+# Stadium submission: field-by-field paste sheet
 
-Placeholders still to fill before submitting: `{{REPO_URL}}`, `{{VIDEO_URL}}`. The testnet txid is filled in.
+Placeholder left: `{{CONTINUING_LINK}}` (upstream issue, if we file one). Repo and video URLs are filled in. Length limits we know of: pitch 80 characters, privacy note 3,000 characters. Both are checked below.
 
 ## Project name
 ZecRecharge
 
-## Tagline (80 chars max)
-AI agent pays shielded testnet ZEC to a gateway that unlocks Bitrefill orders
+## Pitch (one line, 80 chars max)
+Agent pays Indian Jio/gift-card orders in shielded ZEC under a spend mandate
 
-## Track
+## Tracks
 Both (Privacy and Agentic)
 
-## Description (300 words max)
-An AI agent pays shielded ZEC to a viewing-key gateway, and only a verified payment unlocks the Bitrefill order (Zcash testnet, free Bitrefill test products; Bitrefill never receives ZEC). Spending is bounded by a mandate it can't override.
+## Track split
+- **Privacy:** the shielded testnet payment with a memo, the view-only (UFVK) gateway that verifies it, the privacy and trust note, the Zcash friction in FEEDBACK.md Part 2, the testnet txids.
+- **Agentic:** the agent loop, live Bitrefill search and test-product orders, the spending mandate and policy gate, the human-confirm step, the Bitrefill feedback in FEEDBACK.md Part 1, the invoice id below.
+- **Both:** a verified shielded payment is what triggers the order, so the ZEC payment causes the purchase.
 
-ZecRecharge is an AI agent that buys Indian goods (Jio recharges, Amazon Pay and Flipkart cards) from Bitrefill, paying in shielded Zcash to a gateway. It searches Bitrefill live, and a policy gate in code approves, asks a human, or denies. The agent then sends a shielded Zcash testnet transaction to a separate gateway wallet, with memo `ZR1|<invoice>|<policy_hash8>`.
+## Technologies
+Bun 1.4.3 and TypeScript; Anthropic SDK 1.4 (`claude-sonnet-5-5`, optional LLM mode); Bitrefill hosted MCP (guest) and REST v2; NEAR Intents 1Click API v0 (dry quotes); zingo-cli from zingolib `dev` commit `3f2529e2` in Docker; lightwalletd v0.6.1 at `testnet.zec.rocks`; Zcash testnet (NU6.3, v6 transactions); `@toon-format/toon` 4.4; plain HTML with SSE; JSONL ledger. MIT licence.
 
-The gateway holds only a view-only (UFVK) wallet. It decrypts the memo and amount, checks the memo matches the invoice, the amount is enough and the transaction is mined, and only then is the Bitrefill order placed. If verification times out, no order is placed (tested live). The gateway never learns the agent's address; Bitrefill sees only the order.
+## Testnet txid and explorer link
+Txid (shown in the demo video): `981571a1b92044412ce94acc2a3f0304ecc614772a266140a888d541b6f70b31`
+Explorer: https://testnet.zcashexplorer.app/transactions/981571a1b92044412ce94acc2a3f0304ecc614772a266140a888d541b6f70b31
+Block 4,582,317, shielded, agent wallet to gateway wallet. (Plain `curl` gets HTTP 403 from the explorer; use a browser.)
 
-The mandate is Bitrefill-only allow-list, ₹1,000 daily budget, category caps and human Confirm above ₹500. It is enforced inside the money-moving tools against an append-only ledger, bound to the exact product and amount approved. ₹239 Jio is auto-approved, ₹700 Amazon Pay waits for a click, ₹1,500 Flipkart is denied. Every step carries a badge (real, test, quote, fixture, mock, manual).
+Second example: `0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f`, block 4,582,167, 0.00658 TAZ, fee 0.0001 TAZ, memo `ZR1|zrg-32415-c32y-0542e7|<hash8>`.
+https://testnet.zcashexplorer.app/transactions/0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f
 
-What is real: live Bitrefill search, the gate, real shielded testnet transactions, real viewing-key verification, and real Bitrefill API orders. What is labelled: the orders are free Bitrefill test products, the gateway is our own testnet merchant stand-in, the testnet amount is the quoted mainnet ZEC clamped to 0.001-0.01 TAZ, and the ZEC to USDC leg is a quote only. No mainnet payment was made and no real product was bought.
+## Receiving wallet viewing key and birth height (optional)
+Viewing key (UFVK, gateway wallet, testnet): `uviewtest1kted23sqr3yf3ttzrrxcqg0mpyh8t089smuh730d4zhzaw73q8u58895dflm049p3xmzx3xx926kl7lg5l93jeleetnkqqdtjfj0yylxysmefn9xx868enuxd8ajkmxta34dh5fg7qdvdardgel094dezsp60qecwdpkrneqkx7pe2yzt6gwexmk8974c6sguvqag5dqga9f3qzxnkhu8asnpp2tzspseztcwtwde4hj42v9y7hqt2q0uhqpdgwx52lhfqux5c570tu79rvnxtsk0phzddurasnd3e25clnrz636x32622d45xq80tkn8ak223hvhn5mlma96jrswqpaaxv2wy6q65q5rt4dv3uulyxk3jgy9lwenhm8u9csqqv3jef2yxzmq2x2h36chdnmrs3w2hccv2ytamu6j6q6hnfzg34m7u8r0jcggce8vugkarydrxpr3jxujc39g3hlmykdc9us2jm79rgm6eh4se0nlczetl7p`
+Birth height: 4,582,051
+Import it into a view-only testnet wallet (for example `zingo-cli --viewkey`) to see the amount and memo of each payment to the gateway.
 
-Runs with zero keys (`bun run demo`). Next: mainnet settlement and Telegram.
+## Privacy and trust note (3,000 chars max)
+1. What stays private. On chain, a shielded transaction shows only that it happened, its timing and its fee. Amount, sender, recipient and memo are encrypted. The memo holds an invoice id and 8 hex of the policy hash. The gateway never learns the agent's address or history and cannot spend, because it holds only a view-only wallet. Bitrefill never sees a Zcash address, the payment or the memo. Wallet keys never leave the machine, and redemption codes never reach the model.
 
-## How it uses Zcash
-- Real shielded **testnet** transactions (zingo-cli against `testnet.zec.rocks`) from the agent wallet to a gateway wallet, sent only after the gate approves. Example txid: `0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f`, explorer: `https://testnet.zcashexplorer.app/transactions/0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f` (block 4,582,167, shielded, fee 0.0001 TAZ, verified on the explorer).
-- Encrypted memo `ZR1|<invoice id>|<first 8 hex of the policy sha256>` links payment, invoice and mandate. The gateway decrypts it.
-- Viewing keys as the merchant integration: the gateway imports only a UFVK (`zingo-cli --viewkey`), so it can detect and verify payments but cannot spend. Its verification (memo, amount, mined) gates the Bitrefill order.
-- Negative test on testnet: with the timeout forced to 8 s, a paid-but-unverified payment led to no order (txid `92cdb323eb15211576b4d2db6d6a31cd38ced754d2ae88bbf5a4bc1950eb32e0`).
-- Wallet adapters: zingo (real testnet), manual (human sends from a phone), mock. The factory refuses any network except testnet. zecli was tried first and dropped (no public testnet backend, see `docs/track-1.md`).
-
-## How it uses Bitrefill
-- Hosted MCP and REST v2 with a real key in `test` mode: live product search; then a real v2 invoice with `payment_method=balance` and `auto_pay` for the free test products `test-phone-refill` and `test-gift-card-code`. Both went `delivered` in our runs, at zero cost.
-- The order is placed only after the gateway has verified the shielded payment, so the ZEC payment causes the purchase. The matched real product (for example `reliance-jio-india-bundles`) is shown but not bought.
-- Real-spend guard: real products need `BITREFILL_MODE=real` plus an explicit opt-in; we never used it.
-- We noted that Bitrefill MCP tools carry annotations (`destructiveHint`) a gate could use; this build does not read them. 22 documented rough edges with repros in `docs/bitrefill-feedback.md`.
-
-## Privacy note (3,000 chars max)
-Goal: an agent that pays privately and within limits.
-
-What each party sees:
-- The Zcash chain (everyone): a shielded transaction, its timing and fee. Amount, sender, recipient and memo are encrypted.
-- The gateway: it decrypts amount and memo with its viewing key, as the recipient. It never learns the agent's address and cannot spend, because it holds only a view-only wallet.
-- Bitrefill: only the order (product, delivery phone or email). It never sees a Zcash address, the payment or the memo.
-- lightwalletd (testnet.zec.rocks): the IP address of each wallet and which blocks and transactions it downloads. It cannot read notes, amounts or memos. This build has no mixnet or Tor, so the IP is exposed; a user who cares should use Tor or a VPN.
-- LLM provider (Anthropic, only in LLM mode): the request text, search results and prices, and tool results such as invoice id, order id, txid and memo. It never receives wallet keys or redemption codes (the model sees only `has_code: true`). Scripted mode sends nothing to an LLM.
+2. What the app reveals, and to whom.
+- Light-wallet server (testnet.zec.rocks): the wallet's IP address and which blocks and transactions it fetches. It cannot read amounts or memos. This build has no Tor or mixnet.
+- Our own server: everything about a run (request text, product, amount, invoice id, txid, memo) and, through the viewing key, each payment to the gateway. It is stored in a local JSONL ledger and not uploaded.
+- Bitrefill: the search queries, the product, the delivery phone or email, and the order. Never the ZEC payment.
+- AI model provider (Anthropic, LLM mode only): the request text (which can include a phone number), search results and prices, and tool results such as invoice id, order id, txid and memo. Not wallet keys or redemption codes. Scripted mode sends nothing to a model.
 - NEAR Intents 1Click: the dry-quote request only; nothing is swapped.
 
-Design choices:
-- The mandate (`policy.json`) is read by code, never by the model. Its hash is in every memo, so a payment can be audited against the policy that allowed it.
-- Order placement runs the gateway verification in code. The model cannot skip it, and a timeout means no order.
-- Secrets (`.env`, wallet mnemonics, the gateway UFVK file) are git-ignored; the wallets are testnet-only.
-- The local ledger records product, amount and txid and is never uploaded.
+3. Who users must trust. The gateway operator, who sees every payment sent to it and decides when the order is placed (here, us, as a stand-in merchant). The app operator, who can read the ledger. The light-wallet server not to log IP addresses. The model provider and Bitrefill with the details above. The policy gate is plain code reading `policy.json`, not an audited system, and the ledger is a local file that is not tamper-proof. The web UI has no login and binds 127.0.0.1 by default.
 
-Limits we state plainly: this is testnet. The gateway is our own stand-in merchant; Bitrefill does not accept ZEC, so the Bitrefill test order is not paid with the ZEC. The ZEC to USDC settlement is a quote only. A real mainnet flow would reveal a swap hop (transparent output into a deposit address); fixing that needs a native ZEC payment method at Bitrefill or a shielded swap path, our 30-day plan. The ledger is a local file, not tamper-proof. The viewing-key gateway sees every payment sent to it.
+4. What we would fix next. Route the wallet through Tor or Nym. Redact phone numbers before they reach the model. Make settlement real: Bitrefill does not accept ZEC, and a mainnet swap path would expose one transparent hop, so it needs a native ZEC method or a shielded swap. Make the ledger tamper-evident. Replace our own gateway with an existing viewing-key merchant tool.
 
-## Testnet txid
-`0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f`
-(Zcash testnet, shielded, block 4,582,167, fee 0.0001 TAZ, memo `ZR1|zrg-32415-c32y-0542e7|<hash8>`; verified on the explorer. More in the README Evidence section and `docs/integration.md`.)
+This is testnet: the order is a free Bitrefill test product and the ZEC to USDC leg is a quote only.
 
-## 30-day ecosystem milestone
-Make the settlement leg real on mainnet: shielded ZEC through NEAR Intents 1Click (and Zodl CrossPay where available) into USDC on Base at the Bitrefill invoice address, with under-payment and 15-minute-expiry handling. Ship a Telegram front-end ("recharge my Jio") behind the same mandate gate. Success: one real mainnet purchase end to end with a published chain of ids (shielded txid, swap id, Bitrefill invoice and order), plus the policy gate released as a small reusable library for other Zcash agents.
+## 30-day next step
+Make settlement real on mainnet: shielded ZEC through NEAR Intents 1Click (and Zodl CrossPay where available) into USDC on Base at the Bitrefill invoice address, with under-payment and 15-minute invoice-expiry handling (our feedback items F20 and F21 in https://github.com/AaroneGeorge/Zzzz/blob/main/docs/bitrefill-feedback.md). Then a Telegram front-end ("recharge my Jio") behind the same mandate gate, and the gate released as a small library for other Zcash agents. Success: one real mainnet purchase with a published chain of ids (shielded txid, swap id, Bitrefill invoice and order).
+Repo: https://github.com/AaroneGeorge/Zzzz
+Upstream issue we may file: `{{CONTINUING_LINK}}`
 
-## Bitrefill feedback: what worked
-(Full log with repros: `docs/bitrefill-feedback.md`. Items marked "verified live" were hit with a real key on 2026-11-04.)
-1. **Verified live:** a test-product invoice with `payment_method=balance` and `auto_pay=true` completes at zero cost on a 0-BTC account. `test-gift-card-code` and `test-phone-refill` both reached `delivered` in our end-to-end runs (about 140 ms from created to delivered for the gift card).
-2. **Verified live:** `products/search?q=test&include_test_products=true` returns 16 test products, including `*-fail` variants that are useful for negative tests.
-3. Guest checkout auth: two calls (`/oauth/mcp/register`, `/oauth/mcp/token`) give a token with no account. Lowest-friction agent onboarding we have seen.
-4. Error messages that say what to do (410 for key-in-URL, 400 for missing Accept), and correct tool annotations (`readOnlyHint`, `destructiveHint`) that a spending gate can use directly.
-5. Rich product data (`recipient_type`, grouped `payment_methods`, `in_stock`), machine-readable docs (`llms.txt`, a `.md` twin per page) and a deep India catalog (Jio, Airtel).
-
-## Bitrefill feedback: what didn't
-1. **Verified live:** v2 search for "Amazon" in India returns only Amazon Fresh packages, so an "Amazon Pay gift card" request matches a grocery card; guest MCP lists "Amazon.in Shopping India" but as `in_stock=false`. Suggest a product `category` and `in_stock` in v2 search.
-2. **Verified live:** the paid test invoice reports `payment: {method: "balance", currency: "BTC", price: 13418, status: "complete"}` with nothing saying "test", and the balance stays 0. Suggest an `is_test` flag on invoice and order.
-3. **Verified live:** `POST /v2/invoices` returns `not_delivered`; only a re-fetch shows `all_delivered`, even for instant test products. Document the state machine or return the final state when `auto_pay` completes.
-4. **Verified live:** the docs path and reality differ: the balance endpoint is `/v2/accounts/balance`, and `/v2/account/balance` returns an Express HTML 404 instead of JSON.
-5. No ZEC payment method; we had to design around a bridge to `usdc_base` (F20), and a 15-minute invoice expiry is tight for bridged payments (F21). This is why the gateway is a stand-in.
-6. **Verified live:** `test-phone-refill` delivered all afternoon, then from 19:33 IST every identical request ended `permanent_failure` with no reason field, while the invoice still said `payment.status: "complete"`. Suggest documenting test-refill limits and adding a `failure_reason` to orders. (ZecRecharge shows this as "PAID · ORDER FAILED", never as done.)
-7. Guests cannot see test products, so there is no zero-human end-to-end test without a key (F13). MCP results are TOON text with no `structuredContent`, hard for a gate that must read prices in code (F7). Jio packages have no INR face value (F12).
-
-## Tech stack
-Bun 1.4 and TypeScript; Anthropic SDK (Claude, optional LLM mode); Bitrefill MCP (guest) and REST v2; a viewing-key (UFVK) payment gateway; NEAR Intents 1Click API; zingo-cli (Docker) against a Zcash testnet lightwalletd; `@toon-format/toon`; plain HTML plus SSE web UI; JSONL audit ledger. MIT licence.
+## Demo video URL
+https://github.com/AaroneGeorge/Zzzz/releases/download/v1.0-demo/zecrecharge-demo.mp4
 
 ## Repo URL
-`{{REPO_URL}}`
+https://github.com/AaroneGeorge/Zzzz
 
-## Video
-`{{VIDEO_URL}}`
+## Bitrefill touchpoints used (one paragraph)
+Hosted MCP `search-products` with a guest token (no account) for live catalogue search. REST v2 with an API key in test mode: `GET /v2/ping`, `GET /v2/products/search` (with `include_test_products=true`), `POST /v2/invoices` with `payment_method=balance` and `auto_pay=true`, `GET /v2/invoices/{id}` to poll the final state, and `GET /v2/accounts/balance`. Lane: the API-key lane, not x402. Built by us: the MCP client, the product matcher, the v2 order adapter and state normaliser, the policy gate and ledger, the shielded-payment gateway, and the web UI. Reused from Bitrefill: search, product data, test products, ordering and delivery. The order is placed only after the gateway has verified the shielded payment. We did not use x402 and did not buy a real product.
+
+## Invoice ID of a real purchase
+Bitrefill v2 invoice `0fb6f4db-6f80-4f76-8699-c4b5edf067f1` (order `6aeb326986d3593f50960265`, product `test-gift-card-code`, status `delivered`), placed 2026-11-04 18:54 IST right after the gateway verified shielded payment `0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f`. Also, the run shown in the demo video: invoice `e09ab291-114b-4305-bd60-cc2cf3cffbd7` (order `6aeb4069580cd01e17773e31`, `test-gift-card-code`, `all_delivered`, 19:55 IST), placed after the gateway verified txid `981571a1…0b31`.
+Honest label: this is a free Bitrefill TEST product enabled on our account, paid with `payment_method=balance` on a 0-BTC balance. It is a real Bitrefill API order, not a real-money purchase. More test invoices are in docs/integration.md. The Bitrefill invoice id for the video run (txid `981571a1...`) is not recorded in the repo.
+
+## Guardrails
+From `data/policy.json`, enforced in code inside the money-moving tools, not in the prompt:
+- Maximum per purchase: ₹1,000 (category caps: mobile top-ups ₹600, gift cards ₹1,000).
+- Maximum per day: ₹1,000, resetting at midnight IST, counted from an append-only ledger.
+- Approval: a human must click Confirm above ₹500. Anything above ₹1,000 per purchase is denied and cannot be approved at run time. Only the repo owner can change limits, by editing `policy.json`, which the agent cannot touch.
+- Allow-list: `bitrefill` only. The policy hash goes into every shielded memo.
+- Real products need `BITREFILL_MODE=real` plus an explicit opt-in; never used.
+- Live results: ₹239 Jio auto-approved; ₹700 Amazon Pay waited for Confirm; ₹1,500 Flipkart denied; ₹99 with ₹61 left denied (daily budget).
+
+## Bitrefill feedback: what worked
+Full text: FEEDBACK.md Part 1 and docs/bitrefill-feedback.md. "Verified live" means hit with a real key on 2026-11-04.
+1. Verified live: a test-product invoice with `payment_method=balance` and `auto_pay=true` completes at zero cost on a 0-BTC account. `test-gift-card-code` and `test-phone-refill` both reached `delivered` (about 140 ms from created to delivered for the gift card).
+2. Verified live: `products/search?q=test&include_test_products=true` returns 16 test products, including `*-fail` variants that are useful for negative tests.
+3. Guest checkout auth: two calls (`/oauth/mcp/register`, `/oauth/mcp/token`) give a token with no account.
+4. Errors that say what to do (410 for key-in-URL, 400 for missing Accept) and correct tool annotations (`readOnlyHint`, `destructiveHint`) that a spending gate can read.
+5. Rich product data (`recipient_type`, grouped `payment_methods`, `in_stock`), machine-readable docs (`llms.txt`, `.md` twins) and a deep India catalog.
+
+## Bitrefill feedback: what didn't
+1. Verified live: `test-phone-refill` delivered all afternoon, then from 19:33 IST every identical request ended `permanent_failure` with no reason field, while the invoice still said `payment.status: "complete"`. We suggest documenting limits and adding a `failure_reason`. Our app shows this as "PAID · ORDER FAILED".
+2. Verified live: the paid test invoice reports `payment: {method: "balance", currency: "BTC", price: 13418, status: "complete"}` with nothing saying "test". We suggest an `is_test` flag.
+3. Verified live: `POST /v2/invoices` returns `not_delivered`; only a re-fetch shows `all_delivered`. Document the state machine or return the final state.
+4. Verified live: v2 search for "Amazon" in India returns only Amazon Fresh, so an "Amazon Pay gift card" request matches a grocery card; guest MCP lists "Amazon.in Shopping India" as `in_stock=false`. We suggest `category` and `in_stock` in v2 search.
+5. Verified live: `/v2/account/balance` returns an Express HTML 404; the real path is `/v2/accounts/balance`.
+6. No ZEC payment method, so we built a stand-in gateway; a 15-minute invoice expiry is tight for bridged payments (F20, F21).
+7. MCP results are TOON text with no `structuredContent` (hard for a gate that reads prices in code); Jio packages have no INR face value; guests cannot see test products (F7, F12, F13).
+
+## Zcash feedback
+Pointer: FEEDBACK.md, Part 2 (https://github.com/AaroneGeorge/Zzzz/blob/main/FEEDBACK.md). Sections: Faucet, Node or indexer, SDK or wallet tool, Wallet, Docs, Other. Short version:
+- Faucet: fauzec.com worked through its API with no captcha; the jinolabs faucet returned 503 ("Our node did not report its height").
+- Node or indexer: `zaino.testnet.unsafe.zec.rocks` returned 503; `testnet.zec.rocks` (lightwalletd v0.6.1) worked. The only zidecar we found (`zcash.rotko.net`) is mainnet.
+- SDK or wallet tool: zcli 0.6.0 `--testnet` fails against that mainnet zidecar; zcli 0.10.0 is mainnet-only; zcli ssh-key derivation is non-portable (a first 1 TAZ is stranded). zingo-cli (zingolib dev `3f2529e2`) works, but `--waitsync` never returns, so we drive the REPL over stdin.
+- Wallet: change is locked for 3 confirmations; funds sit in the new `ironwood` pool and transactions are v6 (NU7), which our parser had to learn.
