@@ -41,6 +41,8 @@ export class AgentTools {
   private gwInvoice?: GatewayInvoice;
   private brInvoice?: Invoice;
   private verification?: GatewayVerification;
+  /** Set once the gate denies or a human rejects: a denial is final for the whole run, enforced here in code. */
+  private finalDenial?: "denied" | "rejected";
   readonly gateway: Gateway;
 
   constructor(
@@ -83,6 +85,15 @@ export class AgentTools {
       this.setStep(name, "failed", { error: msg, mode: this.step(name).detail?.mode ?? (e instanceof GateError ? "real" : undefined) });
       throw e;
     }
+  }
+
+  /** Refuse any further approval, quote, payment or order once this run was denied or rejected. */
+  private assertNotDenied(tool: string) {
+    const st = this.run.status;
+    if (!this.finalDenial && (st === "denied" || st === "rejected")) this.finalDenial = st;
+    if (!this.finalDenial) return;
+    this.run.status = this.finalDenial; // a later call can never revive the run
+    throw new ToolError(`${tool} refused: this run was ${this.finalDenial === "denied" ? "denied by the policy gate" : "rejected by a human"}, and a denial is final. Stop and tell the user; a new request needs a new run.`);
   }
 
   private bitrefillMode(o?: unknown, isTest = false): Mode {
@@ -146,6 +157,7 @@ export class AgentTools {
 
   // ---------- 2. request_approval ----------
   async request_approval(input: { product_id: string; amount_inr: number; category: string; merchant?: string; phone?: string; reason?: string }) {
+    this.assertNotDenied("request_approval");
     return this.guarded("approve", async () => {
       if (this.step("search").status !== "ok") throw new ToolError("call search_products first");
       const p = this.searched.get(input.product_id);
@@ -165,6 +177,7 @@ export class AgentTools {
         data: { request: req, decision },
       };
       if (!decision.allowed) {
+        this.finalDenial = "denied";
         this.run.status = "denied";
         this.setStep("approve", "failed", { ...base, summary: `DENIED: ${decision.reasons.filter((r) => !/ ok|allow-listed|within/.test(r)).join("; ")}` });
         return { approved: false, decision, message: "Denied by policy. Do not retry with a different amount or merchant; tell the user." };
@@ -179,6 +192,7 @@ export class AgentTools {
         this.run.needsHuman = false;
         decision = gate.decisionFor(this.run.id)!;
         if (!human) {
+          this.finalDenial = "rejected";
           this.run.status = "rejected";
           this.setStep("approve", "failed", { ...base, mode: "manual", summary: `Human rejected ₹${req.amountInr}${this.deps.confirm ? "" : " (no confirm channel)"}` });
           return { approved: false, decision, human_confirmed: false, message: "A human rejected this purchase. Stop and tell the user." };
@@ -209,6 +223,7 @@ export class AgentTools {
 
   // ---------- 3. quote_bridge ----------
   async quote_bridge(input: { amount_inr?: number } = {}) {
+    this.assertNotDenied("quote_bridge");
     return this.guarded("quote", async () => {
       const a = this.approved;
       const inr = Number(input.amount_inr ?? a?.amountInr);
@@ -237,6 +252,7 @@ export class AgentTools {
 
   // ---------- 4/7. place_order ----------
   async place_order(input: { action: "create" | "confirm"; product_id?: string; invoice_id?: string }) {
+    this.assertNotDenied(`place_order(${input.action})`);
     if (input.action === "confirm") return this.confirmOrder(input.invoice_id);
     return this.guarded("invoice", async () => {
       const gate = this.deps.policy;
@@ -264,6 +280,7 @@ export class AgentTools {
 
   // ---------- 5. pay_shielded ----------
   async pay_shielded(input: { invoice_id: string }) {
+    this.assertNotDenied("pay_shielded");
     return this.guarded("pay", async () => {
       const gate = this.deps.policy;
       gate.authorize(this.run.id, "pay_shielded");
@@ -428,7 +445,8 @@ export class AgentTools {
     // The quote is informational and delivery may legitimately wait for payment;
     // a run is "done" when search, approval, invoice and the shielded payment succeeded.
     const core = ["search", "approve", "invoice", "pay", "verify"].every((n) => this.step(n as StepName).status === "ok");
-    if (this.run.status === "running" || this.run.status === "waiting_human") this.run.status = core ? "done" : "failed";
+    if (this.finalDenial) this.run.status = this.finalDenial;
+    else if (this.run.status === "running" || this.run.status === "waiting_human") this.run.status = core ? "done" : "failed";
     this.run.needsHuman = false;
     this.run.finishedAt = new Date().toISOString();
     this.emit();

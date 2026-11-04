@@ -220,6 +220,57 @@ describe("runAgent llm (fake model)", () => {
     expect(bitrefill.invoices.size).toBe(0);
   });
 
+  for (const [label, over, prompt, amount, cat, final] of [
+    ["denied by the gate", {}, "₹1,500 Flipkart gift card", 1500, "gift_card", "denied"],
+    ["rejected by a human", { confirm: async () => false }, "₹700 Amazon Pay gift card", 700, "gift_card", "rejected"],
+  ] as const) {
+    test(`a denial is final in code (${label}): a retry with a smaller amount, pay and order are all refused`, async () => {
+      let asks = 0;
+      const { deps, wallet, bitrefill, gate } = mkDeps({ ...over, ...("confirm" in over ? { confirm: async () => (asks++, false) } : {}) });
+      const model = scriptedModel([
+        { name: "search_products", input: () => ({ query: "Gift", category: cat, amount_inr: amount }) },
+        { name: "request_approval", input: (r) => ({ product_id: (r[0] as any).recommended.product_id, amount_inr: amount, category: cat }) },
+        // the model ignores the denial and retries with an amount the mandate would allow
+        { name: "request_approval", input: (r) => ({ product_id: (r[0] as any).recommended.product_id, amount_inr: 100, category: cat }) },
+        { name: "quote_bridge", input: () => ({ amount_inr: 100 }) },
+        { name: "place_order", input: (r) => ({ action: "create", product_id: (r[0] as any).recommended.product_id }) },
+        { name: "pay_shielded", input: () => ({ invoice_id: "anything" }) },
+        { name: "place_order", input: () => ({ action: "confirm" }) },
+      ]);
+      const seen: string[] = [];
+      const run = await runAgent(prompt, { ...deps, anthropic: model, onStep: (r) => seen.push(r.status), config: { ...deps.config, agentMode: "llm", maxLlmTurns: 20 } });
+      expect(run.status).toBe(final);
+      // once denied, the status never goes back to running / done
+      const firstFinal = seen.indexOf(final);
+      expect(firstFinal).toBeGreaterThan(-1);
+      expect(seen.slice(firstFinal).every((s) => s === final)).toBe(true);
+      expect(wallet.sent).toHaveLength(0);
+      expect(bitrefill.invoices.size).toBe(0);
+      expect(gate.status().spentTodayInr).toBe(0);
+      expect(asks).toBeLessThanOrEqual(1); // the human is never asked again after a rejection
+      expect(run.steps.find((s) => s.name === "approve")!.status).toBe("failed");
+      for (const n of ["quote", "invoice", "pay", "verify", "deliver"]) expect(run.steps.find((s) => s.name === n)!.status).toBe("skipped");
+    });
+  }
+
+  test("AgentTools refuses every money-moving call after a denial (direct calls)", async () => {
+    const { AgentTools } = await import("./tools");
+    const { newRun } = await import("./state");
+    const { deps, wallet } = mkDeps();
+    const run = newRun("run-direct", "₹1,500 Flipkart", "llm");
+    const t = new AgentTools(run, deps, { ...(await import("./deps")).configFromEnv({}), ...deps.config } as any);
+    const s = await t.search_products({ query: "Flipkart", category: "gift_card", amount_inr: 1500 });
+    expect((await t.request_approval({ product_id: s.recommended.product_id, amount_inr: 1500, category: "gift_card" })).approved).toBe(false);
+    await expect(t.request_approval({ product_id: s.recommended.product_id, amount_inr: 400, category: "gift_card" })).rejects.toThrow(/denial is final/);
+    await expect(t.place_order({ action: "create" })).rejects.toThrow(/denial is final/);
+    await expect(t.pay_shielded({ invoice_id: "x" })).rejects.toThrow(/denial is final/);
+    await expect(t.place_order({ action: "confirm" })).rejects.toThrow(/denial is final/);
+    run.status = "running"; // even if something flips the status back, the tools remember
+    await expect(t.pay_shielded({ invoice_id: "x" })).rejects.toThrow(/denial is final/);
+    expect(run.status).toBe("denied");
+    expect(wallet.sent).toHaveLength(0);
+  });
+
   test("tool schema list matches the five tools and dispatch rejects unknown tools", async () => {
     expect(TOOLS.map((t) => t.name).sort()).toEqual(["pay_shielded", "place_order", "quote_bridge", "request_approval", "search_products"]);
     await expect(dispatch({} as never, "transfer_all_funds", {})).rejects.toThrow(/unknown tool/);
