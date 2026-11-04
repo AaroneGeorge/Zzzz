@@ -43,6 +43,26 @@ CARDS = {
 <b>view-only key</b>; only then is the Bitrefill order placed — all behind a policy gate enforced in code.</li>
 </ul>
 """,
+ "card_who": """
+<h2>Who it's for</h2>
+<ul>
+<li><b>Zcash holders</b> who want an AI agent to buy everyday Indian essentials —
+<b>mobile recharges, gift cards</b> — privately, paying in shielded ZEC.</li>
+<li>Without handing the agent <b>unlimited spending</b>: every purchase passes a mandate
+enforced in code that the agent cannot override.</li>
+</ul>
+""",
+ "card_guard": """
+<h2>The guardrails, enforced in code</h2>
+<ul>
+<li>Max <b>₹1,000 per purchase</b> and <b>₹1,000 per day</b></li>
+<li>Above <b>₹500</b>: nothing is paid until a <b>human clicks Confirm</b></li>
+<li>Allow-list: <b>Bitrefill only</b> — no other merchant can be paid</li>
+<li>No verified payment → no order</li>
+</ul>
+<p class="sub" style="font-size:30px;margin-top:40px">The agent can't prompt its way past them: the policy gate checks every request
+before any invoice, payment or order, and logs it to an append-only ledger.</p>
+""",
  "card_end": """
 <h2 style="margin-top:-40px">Real vs labelled — what you just saw</h2>
 <div class="grid">

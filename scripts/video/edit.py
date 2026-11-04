@@ -49,7 +49,7 @@ E["amz_sub"] = need("amz_submitted")
 E["amz_wait"] = need("amz_status", status="waiting_human")
 E["amz_conf"] = need("amz_confirm_click")
 E["amz_done"] = need("amz_done")
-E["reveal"] = first(t_of("reveal_click"), E["amz_done"] + 2)
+E["reveal"] = first(t_of("reveal_click"), E["amz_done"] + 2)   # the code is unmasked from here on: never show it
 E["fk_click"] = need("fk_click")
 E["fk_done"] = need("fk_done")
 E["end"] = need("end")
@@ -64,7 +64,7 @@ RAW = [
     ("jio_search", E["jio_sub"], E["j1"] + 1.5, 1.5, 5.0, None),
     ("jio_gate", E["j1"] + 1.5, E["j2"] + 2.5, 1, 4.5, None),
     ("jio_quote", E["j2"] + 2.5, E["j5run"] + 1.0, 1.25, 7.0, None),
-    ("jio_pay", E["j5run"] + 1.0, E["j6"], 8, 9.5, "Sped up {x}x: the real wait was " + str(WAIT) + " s (real testnet confirmation)"),
+    ("jio_pay", E["j5run"] + 1.0, E["j6"], 4, 16.0, "Sped up {x}x: the real wait was " + str(WAIT) + " s (real testnet confirmation)"),
     ("jio_deliver", E["j6"], E["exh"], 1.25, 7.0, None),
 ]
 amz_from = E["exh"]
@@ -75,12 +75,20 @@ if E["exo"] and E["exc"]:
 RAW += [
     ("amz_click", amz_from, E["amz_wait"], 2, 5.0, None),
     ("amz_confirm", E["amz_wait"], E["amz_conf"] + 1.5, 1, 5.5, None),
-    ("amz_run", E["amz_conf"] + 1.5, E["amz_done"], 8, 9.0, "Sped up {x}x: real wait " + str(AMZ_WAIT) + " s (testnet pay + verify)"),
-    ("amz_reveal", E["amz_done"], min(E["reveal"] + 4.5, E["fk_click"]), 1, 7.0, None),
+    ("amz_run", E["amz_conf"] + 1.5, E["amz_done"], 4, 20.0, "Sped up {x}x: real wait " + str(AMZ_WAIT) + " s (testnet pay + verify)"),
+    ("amz_reveal", E["amz_done"], min(E["reveal"] - 0.02, E["fk_click"]), 1, 7.0, None),   # cut before the reveal click
     ("fk_search", E["fk_click"], E["fk_den"], 2, 4.3, None),
     ("fk_deny", E["fk_den"], E["fk_den"] + 6, 1, 6.0, None),
     ("mandate", E["fk_done"] + 4.5, E["end"], 1, 5.0, None),
 ]
+# freeze a key frame: segment id -> (source time of the frame to hold, extra output seconds)
+FREEZE = {
+    "jio_gate": (E["j2"] + 2.3, 3.0),        # policy gate: auto-approved
+    "jio_deliver": (E["j6"] + 0.6, 3.0),     # gateway verified with the view-only key
+    "amz_reveal": (E["reveal"] - 0.05, max(0.0, 7.0 - (E["reveal"] - E["amz_done"]))),  # hold the masked code
+}
+if E["exo"] and E["exc"]:
+    FREEZE["explorer"] = (E["exc"] - 0.3, 3.0)  # public explorer: shielded, amount + memo hidden
 SEG = []
 for sid, a_, b_, base, mx, tpl in RAW:
     ratio = (b_ - a_) / mx
@@ -113,8 +121,8 @@ for kk, vv in list(caps.items()):
 if t_of("jio_step", idx=7, status="ok") is None and "jio_deliver_failed" in caps:
     caps["jio_deliver"] = caps["jio_deliver_failed"]      # Bitrefill's test order failed in this take: say so
 print("placeholders", PH)
-CARD_SEG = [("card_title", 4.5), ("card_problem", 8.5)]
-END_SEG = [("card_end", 9.5)]
+CARD_SEG = [("card_title", 4.5), ("card_problem", 8.5), ("card_who", 7.0)]
+END_SEG = [("card_guard", 7.0), ("card_end", 9.5)]
 
 lines, timeline, t_out = [], [], 0.0
 
@@ -132,10 +140,18 @@ for sid, a, b, sp, badge in SEG:
     if b <= a:
         continue
     fs = [f for f in frames if a <= f["t"] < b]
+    # rules: every code on screen stays masked. After reveal_click the ₹700 code is visible until the next run starts.
+    bad = [f["f"] for f in fs if E["reveal"] <= f["t"] < E["fk_click"]]
+    if bad:
+        raise SystemExit(f"segment {sid} would show the revealed code: {bad[:3]}")
+    fz = FREEZE.get(sid)
+    fz_f = max((f for f in fs if f["t"] <= fz[0]), key=lambda f: f["t"], default=None) if fz else None
     seg_start = t_out
     for i, f in enumerate(fs):
         nxt = fs[i + 1]["t"] if i + 1 < len(fs) else b
         dur = max(0.0, (nxt - f["t"])) / sp
+        if fz_f is f:
+            dur += fz[1]
         if dur <= 0:
             continue
         lines.append(f"file '{REC}/frames/{f['f']}'\nduration {dur:.4f}")

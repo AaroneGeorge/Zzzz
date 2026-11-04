@@ -22,7 +22,7 @@
  "amz_click": "Another run: ₹700 gift card. Above ₹500, so the agent must wait.",
  "amz_confirm": "Above ₹500: waits for a human Confirm.\nWithout this click, nothing can be paid.",
  "amz_run": "Same 7 steps after Confirm: shielded testnet payment,\nviewing-key verification, then a Bitrefill TEST order.",
- "amz_reveal": "The delivered code is from a free Bitrefill TEST product,\nmasked until clicked. No real gift card was bought.",
+ "amz_reveal": "Code delivered — masked on screen per the rules\n(free TEST product)",
  "fk_search": "Third run: ₹1,500 Flipkart gift card.",
  "fk_deny": "Above the cap: DENIED. No override.\nNo invoice, no payment.",
  "mandate": "If the gateway can't verify in time, no order is placed. Tested live.",
