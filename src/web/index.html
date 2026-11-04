@@ -39,7 +39,7 @@
   .runhead .rid { font: 0.75rem var(--mono); color: var(--faint); }
   .status { font: 800 0.78rem var(--mono); padding: 4px 10px; border-radius: 8px; letter-spacing: .04em; }
   .st-running { background: #fbbf2422; color: var(--run); } .st-waiting_human { background: #fbbf2433; color: var(--run); animation: pulse 1.2s infinite; }
-  .st-done { background: #34d39922; color: var(--ok); } .st-denied, .st-rejected, .st-failed { background: #f8717122; color: var(--fail); }
+  .st-done { background: #34d39922; color: var(--ok); } .st-denied, .st-rejected, .st-failed, .st-order_failed { background: #f8717122; color: var(--fail); }
   @keyframes pulse { 50% { opacity: .55; } }
 
   .confirm { display: none; margin: 0 0 16px; padding: 20px 22px; border-radius: 16px; border: 2px solid var(--run); background: linear-gradient(90deg, #3a2a0599, #12151c); }
@@ -205,6 +205,15 @@ async function decide(approve) {
   await fetch("/api/confirm/" + current.id, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ approve }) });
 }
 
+// Mirrors runStatusLabel() in src/agent/state.ts: a run never says DONE unless the order was delivered.
+function statusLabel(run) {
+  if (run.status === "order_failed") {
+    const d = (run.steps.find((s) => s.name === "deliver") || {}).detail || {};
+    return "PAID · ORDER FAILED" + (d.mode === "test" ? " (Bitrefill test product)" : "");
+  }
+  return run.status.replace("_", " ").toUpperCase();
+}
+
 function render(run) {
   const waiting = run.status === "waiting_human";
   const d = run.decision;
@@ -230,7 +239,7 @@ function render(run) {
   }).join("");
   const notes = (run.notes || []).map((n) => n.startsWith("[") ? `<p class="sys">${esc(n)}</p>` : `<div class="md"><b class="who">Agent</b> ${md(n)}</div>`).join("");
   $("#run").innerHTML = `
-    <div class="runhead"><span class="prompt">“${esc(run.prompt)}”</span><span class="status st-${run.status}">${run.status.replace("_", " ").toUpperCase()}</span><span class="rid">${esc(run.id)} · agent=${esc(run.agentMode)}</span></div>
+    <div class="runhead"><span class="prompt">“${esc(run.prompt)}”</span><span class="status st-${run.status}">${esc(statusLabel(run))}</span><span class="rid">${esc(run.id)} · agent=${esc(run.agentMode)}</span></div>
     <div class="confirm ${waiting ? "show" : ""}">
       <h3><span class="pause"></span>Human confirmation needed</h3>
       <p>${req ? `${inr(req.amountInr)} ${esc(req.category.replace("_", " "))} from ${esc(req.merchant)} is above the auto-approve limit.` : "This purchase is above the auto-approve limit."} ${d ? `Budget today: ${inr(d.spentTodayInr)} spent, ${inr(d.remainingInr)} left.` : ""} The agent cannot continue without you.</p>

@@ -27,7 +27,8 @@ export interface StepDetail {
   facts?: Array<{ label: string; holds: boolean; caveat?: boolean }>;
 }
 
-export type RunStatus = "running" | "waiting_human" | "done" | "denied" | "rejected" | "failed";
+/** order_failed: the shielded payment was made and verified, but the Bitrefill order was not delivered. */
+export type RunStatus = "running" | "waiting_human" | "done" | "denied" | "rejected" | "failed" | "order_failed";
 
 /** RunState (shared contract) plus extra fields for the UI. */
 export interface AgentRun extends RunState {
@@ -61,4 +62,13 @@ export function newRun(id: string, prompt: string, agentMode: "llm" | "scripted"
 export function newRunId(): string {
   const t = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(2, 14);
   return `run-${t}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** Human-readable run status for the CLI and UI (never says DONE unless the order was delivered). */
+export function runStatusLabel(run: Pick<AgentRun, "status" | "steps">): string {
+  if (run.status === "order_failed") {
+    const d = run.steps.find((s) => s.name === "deliver")?.detail;
+    return `PAID · ORDER FAILED${d?.mode === "test" ? " (Bitrefill test product)" : ""}`;
+  }
+  return run.status.replace("_", " ").toUpperCase();
 }

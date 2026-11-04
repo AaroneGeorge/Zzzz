@@ -442,11 +442,12 @@ export class AgentTools {
       s.status = "skipped";
       s.at = new Date().toISOString();
     }
-    // The quote is informational and delivery may legitimately wait for payment;
-    // a run is "done" when search, approval, invoice and the shielded payment succeeded.
+    // The quote is informational. A run is "done" only when the shielded payment was made and verified AND the
+    // Bitrefill order was delivered; paid + verified but not delivered is "order_failed" (never shown as DONE).
     const core = ["search", "approve", "invoice", "pay", "verify"].every((n) => this.step(n as StepName).status === "ok");
+    const delivered = this.step("deliver").status === "ok";
     if (this.finalDenial) this.run.status = this.finalDenial;
-    else if (this.run.status === "running" || this.run.status === "waiting_human") this.run.status = core ? "done" : "failed";
+    else if (this.run.status === "running" || this.run.status === "waiting_human") this.run.status = !core ? "failed" : delivered ? "done" : "order_failed";
     this.run.needsHuman = false;
     this.run.finishedAt = new Date().toISOString();
     this.emit();

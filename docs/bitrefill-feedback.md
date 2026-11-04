@@ -260,3 +260,25 @@ These were hit with a real `BITREFILL_API_KEY`, `BITREFILL_MODE=test`, on an acc
   "Amazon Pay gift card" ends up matching a grocery card. Expected: the vouchers are findable, or there is a clear
   out-of-stock signal in v2 search too. Fix: add a product `category`/`type` and `in_stock` field to v2 search results.
   ZecRecharge only shows the match and buys the free test product, so no money was at risk.
+
+### `test-phone-refill` switched from delivered to `permanent_failure` (verified live, 2026-11-04 19:13 → 19:47 IST)
+
+- **Repro (verified live):** `POST /v2/invoices` with
+  `{"products":[{"product_id":"test-phone-refill","quantity":1,"value":10,"phone_number":"919999999999"}],"payment_method":"balance","auto_pay":true}`
+  (package `test-phone-refill<&>10`, phone as digits with country code, no `+`), then `GET /v2/invoices/{id}` after ~5 s.
+  The same request delivered all afternoon, the last time at 19:13 IST (order `6aeb36ce0b54014cd264e72d`, `delivered`).
+  From 19:33 IST on, every attempt came back invoice `all_error`, order `permanent_failure`, `delivered_time: null`:
+  orders `6aeb3b4d580cd01e1776ce88` (19:33, from an end-to-end run) and a later end-to-end run at 19:39, two direct API calls at 19:41
+  (phones `919999999999` and `918888888888`), and one more direct call at 19:47 (invoice `df2765cd-d48a-4326-8dcc-a27d23642318`, order
+  `6aeb3e602380844701a987a7`). Over the same window `test-gift-card-code` kept delivering (order `6aeb3d80580cd01e1776fe5e`, 19:37).
+- **Expected:** a test product either always delivers, or fails only through its documented `-fail` twin
+  (`test-phone-refill-fail`). If there is a per-account or per-number limit on test refills, the error should say so.
+- **What we got:** the order object carries only `id, status, phone_number, product, created_time, delivered_time,
+  commission`, so there is no reason field to show the user or to decide whether a retry makes sense. The invoice
+  still reports `payment.status: "complete"` with a BTC `price`, which reads like a paid-and-lost order.
+- **Suggested fix:** document the limits and failure triggers of the test refill products (rate limits, per-number
+  caps, maintenance windows), and return a machine-readable reason in the order payload (for example
+  `failure_reason: "test_refill_limit_reached"`) plus `is_test: true`.
+- **What ZecRecharge does about it:** the shielded payment is made and verified before the order, so a failed order
+  is reported as **"PAID · ORDER FAILED (Bitrefill test product)"** in the UI and CLI (CLI exit 2), never as DONE.
+  The demo video's auto-approved run uses `test-gift-card-code` instead.

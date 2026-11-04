@@ -49,7 +49,7 @@ describe("India only", () => {
 
 describe("CLI outcomes", () => {
   test("AGENT_MODE=llm without a key: friendly message suggesting scripted mode", () => {
-    const r = cli(["Recharge +919999999999 with ₹239 Jio"], { AGENT_MODE: "llm" });
+    const r = cli(["Recharge +919999999999 with ₹239 Jio"], { AGENT_MODE: "llm", ANTHROPIC_API_KEY: "" }); // "" so bun does not load the key from app/.env
     expect(r.code).toBe(1);
     expect(r.out).toContain("needs ANTHROPIC_API_KEY");
     expect(r.out).toContain("AGENT_MODE=scripted");

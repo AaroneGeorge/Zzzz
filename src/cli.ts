@@ -3,7 +3,7 @@
 // Flags: --yes / --no (answer the human-confirm prompt), --reset-ledger (operator: archive today's ledger), --json
 import { createInterface } from "node:readline/promises";
 import { FileLedger, DEFAULT_LEDGER_PATH } from "./policy";
-import { configFromEnv, createDefaultDeps, effectiveModes, runAgent, type AgentRun, type StepDetail } from "./agent";
+import { configFromEnv, createDefaultDeps, effectiveModes, runAgent, runStatusLabel, type AgentRun, type StepDetail } from "./agent";
 
 import { promptFromArgs } from "./agent/parse";
 
@@ -81,7 +81,7 @@ async function main() {
   for (const n of run.notes) console.log(c("90", n.startsWith("[") ? n : `agent: ${n}`));
   const okCount = run.steps.filter((s) => s.status === "ok").length;
   const st = deps.policy.status();
-  console.log(`\nrun ${run.id}: ${c("1", run.status.toUpperCase())} · ${okCount}/${run.steps.length} steps OK · budget ₹${st.spentTodayInr} spent, ₹${st.remainingInr} left today · ledger ${ledgerPath}`);
+  console.log(`\nrun ${run.id}: ${c("1", runStatusLabel(run))} · ${okCount}/${run.steps.length} steps OK · budget ₹${st.spentTodayInr} spent, ₹${st.remainingInr} left today · ledger ${ledgerPath}`);
   if (run.error) console.log(c("31", `error: ${run.error}`));
   if (run.status === "denied" || run.status === "rejected") {
     const appr = run.steps.find((s) => s.name === "approve")?.detail as StepDetail | undefined;
@@ -89,8 +89,10 @@ async function main() {
     console.log(c("33", `${run.status === "denied" ? "Denied by the policy gate" : "Rejected"}: ${why}. Nothing was paid and no order was placed (expected outcome, exit 0).`));
   }
   if (flags.has("--json")) console.log(JSON.stringify(run, null, 2));
-  // A denial or human rejection is the mandate working as designed, not a crash: exit 0. Only a failed run is an error.
-  process.exit(run.status === "failed" ? 1 : 0);
+  if (run.status === "order_failed") console.log(c("31", "The shielded testnet payment was made and verified, but the Bitrefill order was NOT delivered (exit 2)."));
+  // A denial or human rejection is the mandate working as designed, not a crash: exit 0.
+  // A failed run exits 1; paid-but-order-not-delivered exits 2.
+  process.exit(run.status === "failed" ? 1 : run.status === "order_failed" ? 2 : 0);
 }
 
 function printStep(r: AgentRun, name: string) {

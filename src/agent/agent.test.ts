@@ -4,7 +4,7 @@ import { createFakeBitrefill, createFakeWallet, fakeBridgeQuote } from "./fakes"
 import { runAgent, type AgentDeps, type AgentRun } from "./index";
 import { dispatch, TOOLS, type LlmClientLike } from "./llm";
 import { parseIndianAmount, parseIndianPhone, parseRequest } from "./parse";
-import { STEP_DEFS } from "./state";
+import { runStatusLabel, STEP_DEFS } from "./state";
 
 const policy: Policy = {
   version: 1,
@@ -293,6 +293,20 @@ describe("gateway gates the order", () => {
     expect(JSON.stringify(del.detail)).toContain("NOT placed");
     expect(bitrefill.invoices.size).toBe(0);
     expect(run.status).toBe("failed");
+  });
+
+  test("paid + verified but the Bitrefill order fails: status order_failed, never DONE", async () => {
+    const { deps, bitrefill, wallet } = mkDeps();
+    // Bitrefill's test-phone-refill started returning permanent_failure (2026-11-04 19:33 IST): simulate it.
+    const realGetOrder = bitrefill.getOrder.bind(bitrefill);
+    bitrefill.getOrder = async (id: string) => ({ ...(await realGetOrder(id)), status: "permanent_failure", code: undefined, instructions: undefined });
+    const run = await runAgent("Recharge +919999999999 with ₹239 Jio", deps);
+    expect(wallet.sent).toHaveLength(1);
+    expect(run.steps.find((s) => s.name === "verify")!.status).toBe("ok");
+    expect(run.steps.find((s) => s.name === "deliver")!.status).not.toBe("ok");
+    expect(run.status).toBe("order_failed");
+    expect(runStatusLabel(run)).toStartWith("PAID · ORDER FAILED");
+    expect(runStatusLabel(run)).not.toContain("DONE");
   });
 
   test("order is created only after verification", async () => {
