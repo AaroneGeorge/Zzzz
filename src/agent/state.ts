@@ -24,7 +24,7 @@ export interface StepDetail {
   data?: unknown;
   error?: string;
   /** privacy facts shown as a checklist (gateway step) */
-  facts?: Array<{ label: string; holds: boolean }>;
+  facts?: Array<{ label: string; holds: boolean; caveat?: boolean }>;
 }
 
 export type RunStatus = "running" | "waiting_human" | "done" | "denied" | "rejected" | "failed";

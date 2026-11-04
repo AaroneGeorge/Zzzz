@@ -60,7 +60,7 @@
   .s-running .dot { border-color: var(--run); color: var(--run); box-shadow: 0 0 0 6px #fbbf2418; animation: pulse 1s infinite; }
   .s-skipped .dot { border-style: dashed; }
   .body { padding: 14px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); transition: border-color .3s; min-width: 0; }
-  .facts { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12.5px; } .facts li { margin: 2px 0; } .facts .yes { color: #6ee7b7; } .facts .no { color: #9ca3af; }
+  .facts { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12.5px; } .facts li { margin: 2px 0; } .facts .yes { color: #6ee7b7; } .facts .no { color: #9ca3af; } .facts .warn { color: var(--run); }
   .s-ok .body { border-color: #1f4d3b; } .s-failed .body { border-color: #5b2323; } .s-running .body { border-color: #5c4a12; }
   .s-pending .body, .s-skipped .body { opacity: .5; }
   .title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -78,7 +78,8 @@
   .secret { margin-top: 10px; display: inline-flex; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--bg); border: 1px dashed var(--faint); cursor: pointer; font: 700 1rem var(--mono); }
   .secret .lbl { font: 600 0.75rem var(--mono); color: var(--dim); }
   .notes { margin-top: 18px; padding: 14px 18px; font-size: 0.92rem; color: #cfd5e3; }
-  .notes p { margin: 4px 0; } .notes .sys { color: var(--faint); font: 0.75rem var(--mono); }
+  .notes p { margin: 4px 0; } .notes .md { margin: 6px 0; } .md .mdl { display: block; margin: 2px 0; } .md ul, .md ol { margin: 4px 0 4px 1.2em; padding: 0; }
+  .md code { font: 0.85em var(--mono); background: var(--panel2); padding: 1px 5px; border-radius: 5px; } .notes .sys { color: var(--faint); font: 0.75rem var(--mono); }
   .empty { padding: 50px 20px; text-align: center; color: var(--faint); }
 
   aside .card { padding: 18px 20px; margin-bottom: 18px; }
@@ -141,6 +142,28 @@
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Minimal, safe markdown for the agent's text: escape ALL HTML first, then add only attribute-free tags
+// for **bold**, `code`, "- " / "* " bullets and "1. " numbered lists. No links, no raw HTML.
+function md(src) {
+  const inline = (t) => esc(t)
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+  const out = [];
+  let list = null;
+  const close = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  for (const line of String(src ?? "").split(/\r?\n/)) {
+    const ul = /^\s*[-*•]\s+(.*)$/.exec(line), ol = /^\s*\d+[.)]\s+(.*)$/.exec(line);
+    if (ul || ol) {
+      const kind = ul ? "ul" : "ol";
+      if (list !== kind) { close(); out.push(`<${kind}>`); list = kind; }
+      out.push(`<li>${inline((ul || ol)[1])}</li>`);
+    } else if (!line.trim()) { close(); }
+    else { close(); out.push(`<span class="mdl">${inline(line.replace(/^#{1,6}\s+/, ""))}</span>`); }
+  }
+  close();
+  return out.join("");
+}
 const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 const PRESETS = [
   "Recharge +919999999999 with ₹239 Jio",
@@ -201,11 +224,11 @@ function render(run) {
         ${dt.error ? `<div class="err">${esc(dt.error)}</div>` : ""}
         ${ids ? `<dl class="ids">${ids}</dl>` : ""}
         ${links ? `<div class="links">${links}</div>` : ""}
-        ${dt.facts ? `<ul class="facts">${dt.facts.map((f) => `<li class="${f.holds ? "yes" : "no"}">${f.holds ? "✓" : "✕"} ${esc(f.label)}</li>`).join("")}</ul>` : ""}
+        ${dt.facts ? `<ul class="facts">${dt.facts.map((f) => f.caveat ? `<li class="warn">⚠ ${esc(f.label)}</li>` : `<li class="${f.holds ? "yes" : "no"}" ${f.holds ? "" : 'title="not shown in this mode"'}>${f.holds ? "✓" : "–"} ${esc(f.label)}</li>`).join("")}</ul>` : ""}
         ${secret}
       </div></li>`;
   }).join("");
-  const notes = (run.notes || []).map((n) => n.startsWith("[") ? `<p class="sys">${esc(n)}</p>` : `<p><b class="who">Agent</b> ${esc(n)}</p>`).join("");
+  const notes = (run.notes || []).map((n) => n.startsWith("[") ? `<p class="sys">${esc(n)}</p>` : `<div class="md"><b class="who">Agent</b> ${md(n)}</div>`).join("");
   $("#run").innerHTML = `
     <div class="runhead"><span class="prompt">“${esc(run.prompt)}”</span><span class="status st-${run.status}">${run.status.replace("_", " ").toUpperCase()}</span><span class="rid">${esc(run.id)} · agent=${esc(run.agentMode)}</span></div>
     <div class="confirm ${waiting ? "show" : ""}">

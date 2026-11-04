@@ -357,7 +357,7 @@ export class AgentTools {
             { label: "The gateway decrypts amount + memo with its viewing key" + (gw.view === "ufvk" ? " (view-only UFVK wallet: it cannot spend)" : gw.view === "wallet" ? " (here: its full wallet; UFVK wallet unavailable)" : " (mock)"), holds: gw.view !== "mock" },
             { label: "The gateway never learns the agent's address (shielded sender)", holds: true },
             { label: "Bitrefill sees only the order for the invoice, never a Zcash address, txid or memo", holds: true },
-            { label: "Caveat: the lightwalletd server sees our IP (this build runs without the Nym mixnet)", holds: gw.view !== "mock" },
+            { label: "Caveat: the lightwalletd server sees our IP (this build runs without the Nym mixnet)", holds: gw.view !== "mock", caveat: true },
           ],
           data: { verification: v, pricing: g.pricing },
         });

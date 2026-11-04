@@ -103,7 +103,8 @@ function printStep(r: AgentRun, name: string) {
   if (d.error) console.log(c("31", `      ${d.error}`));
   for (const [k, v] of Object.entries(d.ids ?? {})) console.log(c("90", `      ${k}: `) + v);
   for (const l of d.links ?? []) console.log(c("90", `      ${l.label}: `) + c("4", l.url));
-  for (const f of d.facts ?? []) console.log(c(f.holds ? "32" : "90", `      ${f.holds ? "✓" : "✕"} ${f.label}`));
+  // A caveat is a limitation, never a tick: ⚠. In mock mode facts that do not apply get "–", not ✕.
+  for (const f of d.facts ?? []) console.log(c(f.caveat ? "33" : f.holds ? "32" : "90", `      ${f.caveat ? "⚠" : f.holds ? "✓" : "–"} ${f.label}${!f.caveat && !f.holds ? " (not shown in this mode)" : ""}`));
   if (d.secret) console.log(c("90", `      ${d.secret.label}: `) + `${d.secret.value.slice(0, 3)}•••••• (masked; --json to reveal)`);
 }
 
