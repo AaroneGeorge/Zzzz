@@ -10,7 +10,7 @@
 | `src/bridge` | NEAR Intents 1Click **dry** quote, ZEC to USDC on Base. |
 | `src/gateway` | The shielded payment gateway: invoice, view-only wallet source (`zingo-source`), memo/amount matcher, polling watcher. See below. |
 | `src/wallet` | Wallet interface (`getAddress`, `getBalance`, `send`, `waitConfirmed`, `readMemos`) with adapters `zingo` (zingo-cli in Docker, testnet), `zecli` (addresses only; no public testnet backend), `manual`, `mock`. |
-| `src/web` | Bun server plus one static `index.html`: timeline, Confirm card, mandate meters, audit log. |
+| `src/web` | Bun server plus one static `index.html`: timeline, Confirm card, mandate meters, audit log. Binds `127.0.0.1` unless `HOST` says otherwise; POSTs must be same-origin JSON (`guard.ts`). Chips show the wallet actually used after any fallback. |
 | `data/policy.json` | The mandate. Not readable or writable by any tool exposed to the model. |
 
 ## Data flow
@@ -44,7 +44,7 @@ Matching rules. A payment counts for an invoice only if all three hold:
 
 **Order dependency.** `place_order(confirm)` runs the verification in code before it touches Bitrefill. The model cannot call the order step "directly" and skip it, and the gate's checks (same product and amount as approved, budget still fits) still apply to both `pay_shielded` and `place_order`.
 
-A cross-process lock (`<wallet dir>/.zr-session.lock`, atomic `mkdir`, stale after 10 minutes) stops the web server and the CLI from opening the same zingo wallet at once.
+A cross-process lock (`<wallet dir>/.zr-session.lock`, atomic `mkdir`, holding the owner's PID) stops the web server and the CLI from opening the same zingo wallet at once. The holder removes it on exit, SIGINT and SIGTERM; a lock whose PID is dead is stale and taken over at once (a lock without a PID file falls back to a 10-minute age rule). Before any of this, `ZEC_WALLET=zingo` runs a preflight (5 s cap per call) that Docker answers and the `zecrecharge/zingo-cli` image exists, and fails fast with the build command otherwise.
 
 ## Privacy facts: who sees what
 
@@ -64,8 +64,8 @@ A cross-process lock (`<wallet dir>/.zr-session.lock`, atomic `mkdir`, stale aft
 ### Why the LLM cannot bypass it
 
 - **Enforcement is in the tools, not the prompt.** `place_order` and `pay_shielded` call `gate.authorize()` first and throw `GateError` unless the run has: an allowed decision; a human "yes" if one was needed; the same product and amount as were approved; and the budget still fits against the ledger at that moment (re-checked, so two concurrent runs cannot both spend the last rupees).
-- **The model has no tool to change policy, ledger or the human answer.** The tools are `search_products`, `quote_bridge`, `request_approval`, `pay_shielded`, `place_order`. The human decision arrives through a separate HTTP endpoint (`POST /api/confirm/:id`) or CLI prompt, not through a tool.
-- **A denial is final.** `recordHuman` refuses to record a yes for a denied request.
+- **The model has no tool to change policy, ledger or the human answer.** The tools are `search_products`, `quote_bridge`, `request_approval`, `pay_shielded`, `place_order`. The human decision arrives through a separate HTTP endpoint (`POST /api/confirm/:id`, loopback-only by default, cross-origin POSTs refused) or CLI prompt, not through a tool.
+- **A denial is final, in code.** Once the gate denies a request or a human rejects it, `AgentTools` refuses every later `request_approval`, `quote_bridge`, `place_order` and `pay_shielded` in that run, and `run.status` stays `denied`/`rejected` (tested with a model that retries a smaller amount). `recordHuman` also refuses to record a yes for a denied request.
 - **Code, not the model, sets the memo and the amounts.** The model passes an invoice id; the memo, destination and zatoshi amount come from code. Tool arguments are checked against the approved request.
 - **Auditable.** Each decision, human click and spend is appended to `data/ledger.jsonl`, and the policy hash (first 8 hex in the memo, full sha256 in the ledger) binds a payment to the exact policy that allowed it.
 - **Defence in depth in the adapters.** Bitrefill `test` mode refuses non-test products (`test_mode_guard`); `real` mode refuses auto-pay of real products without `BITREFILL_ALLOW_REAL_SPEND=yes` (`spend_guard`); the wallet factory refuses any network but testnet.

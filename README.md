@@ -25,13 +25,15 @@ Requires [bun](https://bun.sh) 1.4+ (no Node needed).
 bun install
 cp .env.example .env
 AGENT_MODE=scripted BITREFILL_MODE=offline ZEC_WALLET=mock bun run demo -- "Recharge +919999999999 with ₹239 Jio"
-bun test                      # 92 tests, no network or keys needed
+bun test                      # 123 tests, no network or keys needed
 bun run serve                 # web UI on http://localhost:3000, click a preset
 ```
 
 The web server binds `127.0.0.1` by default (`PORT` defaults to 3000). It has no login, so anyone who can reach it can start a run and press Confirm: `HOST=0.0.0.0` opts in to exposing it on your network, and only do that on a network you trust. POST endpoints (`/api/run`, `/api/confirm/:id`) accept only `application/json` from the same origin; cross-origin POSTs and non-loopback `Host` headers (DNS rebinding) get HTTP 403.
 
 Even with no keys the Bitrefill **search** and the 1Click **quote** are live network calls (guest MCP needs no key). Only the gateway, invoice, order and wallet are mock/fixture. Set `BITREFILL_LIVE_SEARCH=0` and `ONECLICK_MODE=offline` for fully offline runs.
+
+A blank request (`bun run demo -- ""`) is a usage error (exit 2); with no request at all the demo runs the ₹239 Jio example. Requests outside India (£, $, €, a non-+91 number) are refused as "India only (INR)". `AGENT_MODE=llm` without `ANTHROPIC_API_KEY` stops with a hint to use `AGENT_MODE=scripted`.
 
 Expected: 7/7 steps OK with badges `REAL` (search), `REAL` (gate), `QUOTE`, `MOCK` (gateway invoice, pay with a `mock-` txid, gateway verification) and `FIXTURE` (order).
 
@@ -49,7 +51,7 @@ bun run demo -- --yes "₹700 Amazon Pay gift card for my mom"
 
 Smaller steps: `AGENT_MODE=llm BITREFILL_MODE=offline ZEC_WALLET=mock bun run demo -- --yes "…"` (LLM only), `BITREFILL_MODE=test bun run bitrefill:selftest` (v2 ping and a free test order), `ZEC_WALLET=zingo bun run wallet:selftest`.
 
-Demo presets: ₹239 Jio (auto-approved), ₹700 Amazon Pay (Confirm card), ₹1,500 Flipkart (denied: above the ₹1,000 per-purchase cap). CLI flags: `--yes` / `--no`, `--json`, `--reset-ledger`. Do not start a CLI payment while a web run is paying; a wallet lock makes the second one wait.
+Demo presets: ₹239 Jio (auto-approved), ₹700 Amazon Pay (Confirm card), ₹1,500 Flipkart (denied: above the ₹1,000 per-purchase cap). CLI flags: `--yes` / `--no`, `--json`, `--reset-ledger`. A denied or human-rejected run prints why, says nothing was paid or ordered, and exits 0 (an expected outcome); only a failed run exits 1. Do not start a CLI payment while a web run is paying; a wallet lock (`.secrets/zingo-testnet/.zr-session.lock`, holding the owner's PID) makes the second one wait. Ctrl-C or SIGTERM releases it, and a lock left by a dead process is taken over at once. With `ZEC_WALLET=zingo`, a 5-second preflight checks Docker and the `zecrecharge/zingo-cli` image and exits with the build command if either is missing.
 
 ### Gateway settings and scripts
 
@@ -64,7 +66,7 @@ Demo presets: ₹239 Jio (auto-approved), ₹700 Amazon Pay (Confirm card), ₹1
 |---|---|
 | `bun run gateway:selftest` | `ZEC_WALLET=zingo`: agent pays the gateway 0.001 TAZ, the UFVK wallet must verify it (about 1.5 min) |
 | `bun run wallet:split -- 6 5000000` | One tx that splits funds into 6 notes of 0.05 TAZ to self, so back-to-back runs do not wait for change (wait about 5 minutes, 3+ blocks, before the next run) |
-| `bun run wallet:selftest` | Self-transfer with memo, waits for a block, decrypts the memo |
+| `bun run wallet:selftest` | Wallet check only, not the purchase flow: a shielded self-transfer with memo, waits for a block, decrypts the memo |
 | `bun run bitrefill:selftest` | v2 ping, free test order, 1Click dry quote |
 
 ## Architecture
