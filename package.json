@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "An AI agent that buys real Indian goods on Bitrefill with shielded ZEC, under a budget mandate it cannot override.",
+  "description": "An AI agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order (testnet + Bitrefill test products), under a budget mandate it cannot override.",
   "scripts": {
     "test": "bun test",
     "demo": "bun run src/cli.ts",

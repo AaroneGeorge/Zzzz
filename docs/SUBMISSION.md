@@ -6,15 +6,15 @@ Placeholders still to fill before submitting: `{{REPO_URL}}`, `{{VIDEO_URL}}`. T
 ZecRecharge
 
 ## Tagline (80 chars max)
-An AI agent spending shielded ZEC at Bitrefill, within a budget it can't break
+AI agent pays shielded testnet ZEC to a gateway that unlocks Bitrefill orders
 
 ## Track
 Both (Privacy and Agentic)
 
 ## Description (300 words max)
-Shielded ZEC can pay for Bitrefill today through a viewing-key gateway, and the agent's spending is bounded by a mandate it can't override.
+An AI agent pays shielded ZEC to a viewing-key gateway, and only a verified payment unlocks the Bitrefill order (Zcash testnet, free Bitrefill test products; Bitrefill never receives ZEC). Spending is bounded by a mandate it can't override.
 
-ZecRecharge is an AI agent that buys Indian goods (Jio recharges, Amazon Pay and Flipkart cards) from Bitrefill and pays in shielded Zcash. It searches Bitrefill live, and a policy gate in code approves, asks a human, or denies. The agent then sends a shielded Zcash testnet transaction to a separate gateway wallet, with memo `ZR1|<invoice>|<policy_hash8>`.
+ZecRecharge is an AI agent that buys Indian goods (Jio recharges, Amazon Pay and Flipkart cards) from Bitrefill, paying in shielded Zcash to a gateway. It searches Bitrefill live, and a policy gate in code approves, asks a human, or denies. The agent then sends a shielded Zcash testnet transaction to a separate gateway wallet, with memo `ZR1|<invoice>|<policy_hash8>`.
 
 The gateway holds only a view-only (UFVK) wallet. It decrypts the memo and amount, checks the memo matches the invoice, the amount is enough and the transaction is mined, and only then is the Bitrefill order placed. If verification times out, no order is placed (tested live). The gateway never learns the agent's address; Bitrefill sees only the order.
 

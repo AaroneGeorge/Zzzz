@@ -127,5 +127,6 @@ const server = Bun.serve({
   },
 });
 
+console.log("Agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order (testnet + Bitrefill test products)");
 console.log(`ZecRecharge UI on http://localhost:${server.port}  (agent=${cfg.agentMode}, bitrefill=${cfg.bitrefillMode}, wallet=${cfg.walletKind}, gateway=${deps.gateway.view}, sources=${JSON.stringify(deps.sources)})`);
 for (const w of deps.warnings) console.log(`  note: ${w}`);

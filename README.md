@@ -1,6 +1,6 @@
 # ZecRecharge
 
-**An AI agent that shops on Bitrefill for Indian goods (Jio recharge, Amazon Pay cards) and pays in shielded Zcash through a viewing-key gateway, under a spending mandate it cannot override.**
+**An AI agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order for Indian goods (Jio recharge, Amazon Pay cards). Testnet + Bitrefill test products, under a spending mandate it cannot override. Bitrefill never receives ZEC.**
 
 - You say "recharge +91… with ₹239 Jio". The agent searches Bitrefill live, a policy gate approves or denies in code, and the agent sends a shielded testnet ZEC transaction to a separate gateway wallet. The memo `ZR1|<invoice>|<hash8>` ties the payment to the invoice and to the exact policy in force.
 - The gateway holds only a **view-only (UFVK) wallet**. It matches memo, amount and mined status. **Only a verified payment triggers the Bitrefill order.** If verification times out, no order is placed.

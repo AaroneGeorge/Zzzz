@@ -9,6 +9,8 @@ const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith("--")));
 const prompt = args.filter((a) => !a.startsWith("--")).join(" ").trim() || "Recharge +919999999999 with ₹239 Jio";
 
+const TAGLINE = "Agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order (testnet + Bitrefill test products)";
+
 const color = process.stdout.isTTY && !process.env.NO_COLOR;
 const c = (code: string, s: string) => (color ? `\x1b[${code}m${s}\x1b[0m` : s);
 const ICON: Record<string, string> = { ok: c("32", "OK  "), failed: c("31", "FAIL"), skipped: c("90", "SKIP"), running: c("33", "... "), pending: c("90", "    ") };
@@ -23,6 +25,7 @@ async function main() {
   }
   const cfg = configFromEnv();
   const deps = await createDefaultDeps({ ledgerPath });
+  console.log(c("90", TAGLINE));
   console.log(c("1", `ZecRecharge · agent=${cfg.agentMode} · bitrefill=${cfg.bitrefillMode} · wallet=${cfg.walletKind} · gateway=${deps.gateway.view} · network=${cfg.network}`));
   console.log(`sources: wallet=${deps.sources.wallet} bitrefill=${deps.sources.bitrefill} bridge=${deps.sources.bridge} · policy ${deps.policy.hash8}`);
   for (const w of deps.warnings) console.log(c("90", `  note: ${w}`));

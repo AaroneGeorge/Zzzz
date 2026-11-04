@@ -22,7 +22,7 @@ Full version in `docs/integration.md`. Finish recording well before the 00:00 IS
 
 | Time | On screen | Caption (exact text) |
 |---|---|---|
-| 0:00 to 0:08 | Title card, then the web UI with the mandate panel (₹1,000 left) and the chips. | "ZecRecharge: an AI agent that pays for Bitrefill with shielded ZEC." / "Spending bounded by a mandate it can't override." |
+| 0:00 to 0:08 | Title card, then the web UI with the mandate panel (₹1,000 left) and the chips. | "ZecRecharge: an AI agent pays shielded ZEC to a viewing-key gateway, and only a verified payment unlocks the Bitrefill order. Testnet and Bitrefill test products." / "Spending bounded by a mandate it can't override." |
 | 0:08 to 0:16 | Click **₹239 Jio**. Step 1 appears, badge REAL. | "1. Search: live Bitrefill search (REAL)." |
 | 0:16 to 0:24 | Step 2 turns green, budget meter drops. | "2. Policy gate, in code: budget, allow-list, caps. Small amount: auto-approved." |
 | 0:24 to 0:32 | Step 3, QUOTE badge. | "3. Quote: ZEC to USDC via NEAR Intents. A dry quote: nothing is swapped (QUOTE)." |
