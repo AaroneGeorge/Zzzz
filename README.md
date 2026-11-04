@@ -29,7 +29,7 @@ bun test                      # 92 tests, no network or keys needed
 bun run serve                 # web UI on http://localhost:3000, click a preset
 ```
 
-The web server binds `0.0.0.0` by default (`HOST` overrides it, `PORT` defaults to 3000), so it is reachable from other machines on your network. Set `HOST=127.0.0.1` to keep it local.
+The web server binds `127.0.0.1` by default (`PORT` defaults to 3000). It has no login, so anyone who can reach it can start a run and press Confirm: `HOST=0.0.0.0` opts in to exposing it on your network, and only do that on a network you trust. POST endpoints (`/api/run`, `/api/confirm/:id`) accept only `application/json` from the same origin; cross-origin POSTs and non-loopback `Host` headers (DNS rebinding) get HTTP 403.
 
 Even with no keys the Bitrefill **search** and the 1Click **quote** are live network calls (guest MCP needs no key). Only the gateway, invoice, order and wallet are mock/fixture. Set `BITREFILL_LIVE_SEARCH=0` and `ONECLICK_MODE=offline` for fully offline runs.
 

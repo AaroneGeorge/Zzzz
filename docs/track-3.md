@@ -70,7 +70,7 @@ Env knobs:
 - `ZEC_DEST_ADDRESS` (default: the wallet's own address)
 - `USDC_RECIPIENT`
 - `ORDER_POLL_MS`, `ZEC_CONFIRM_WAIT_MS`, `AGENT_MAX_TURNS`
-- `HOST`
+- `HOST` (default `127.0.0.1`; `0.0.0.0` exposes the unauthenticated UI on the network)
 
 ## Real vs mocked (T3 parts)
 

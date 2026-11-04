@@ -1,9 +1,11 @@
 // bun run serve  →  http://localhost:3000
 import { join } from "node:path";
+import { checkPost } from "./guard";
 import { configFromEnv, createDefaultDeps, newRunId, runAgent, type AgentRun } from "../agent";
 
 const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || "0.0.0.0";
+// Loopback by default: the run and Confirm endpoints have no auth. HOST=0.0.0.0 opts in to LAN exposure.
+const HOST = process.env.HOST || "127.0.0.1";
 const INDEX = join(import.meta.dir, "index.html");
 
 const cfg = configFromEnv();
@@ -87,6 +89,10 @@ const server = Bun.serve({
   async fetch(req) {
     const url = new URL(req.url);
     const p = url.pathname;
+    if (req.method === "POST") {
+      const why = checkPost(req, HOST);
+      if (why) return json({ error: `forbidden: ${why}` }, 403);
+    }
     if (req.method === "GET" && (p === "/" || p === "/index.html")) {
       return new Response(Bun.file(INDEX), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
@@ -128,5 +134,5 @@ const server = Bun.serve({
 });
 
 console.log("Agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order (testnet + Bitrefill test products)");
-console.log(`ZecRecharge UI on http://localhost:${server.port}  (agent=${cfg.agentMode}, bitrefill=${cfg.bitrefillMode}, wallet=${cfg.walletKind}, gateway=${deps.gateway.view}, sources=${JSON.stringify(deps.sources)})`);
+console.log(`ZecRecharge UI on http://${HOST === "0.0.0.0" || HOST === "::" ? "localhost" : HOST.includes(":") ? `[${HOST}]` : HOST}:${server.port}${HOST === "0.0.0.0" || HOST === "::" ? " (bound to all interfaces: no auth, anyone on your network can run and confirm)" : ""}  (agent=${cfg.agentMode}, bitrefill=${cfg.bitrefillMode}, wallet=${cfg.walletKind}, gateway=${deps.gateway.view}, sources=${JSON.stringify(deps.sources)})`);
 for (const w of deps.warnings) console.log(`  note: ${w}`);
