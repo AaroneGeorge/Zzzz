@@ -311,6 +311,60 @@ export class ZingoWallet implements Wallet {
   }
 }
 
+export const ZINGO_IMAGE_DEFAULT = "zecrecharge/zingo-cli";
+export const ZINGO_BUILD_HINT = `docker build -f docker/zingo.Dockerfile -t ${ZINGO_IMAGE_DEFAULT} docker/`;
+
+/** Runs argv with a hard timeout; resolves { code, out } (code -1 = timed out or could not start). */
+export type PreflightRunner = (argv: string[], timeoutMs: number) => Promise<{ code: number; out: string }>;
+
+export const bunPreflightRunner: PreflightRunner = async (argv, timeoutMs) => {
+  let proc: ReturnType<typeof Bun.spawn>;
+  try {
+    proc = Bun.spawn(argv, { stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+  } catch (e) {
+    return { code: -1, out: (e as Error).message };
+  }
+  let timedOut = false;
+  const t = setTimeout(() => {
+    timedOut = true;
+    proc.kill(9);
+  }, timeoutMs);
+  const [code, out, err] = await Promise.all([proc.exited, new Response(proc.stdout as ReadableStream).text(), new Response(proc.stderr as ReadableStream).text()]);
+  clearTimeout(t);
+  return timedOut ? { code: -1, out: `timed out after ${timeoutMs} ms` } : { code, out: (out + err).trim() };
+};
+
+/**
+ * ZEC_WALLET=zingo preflight (a few seconds at most): Docker must answer and the zingo-cli image must exist.
+ * Without it a fresh clone used to hang silently at the first wallet call. Tries `docker`, then `sudo -n docker`
+ * (as scripts/wallet-zingo.sh does), or exactly $DOCKER when set. Throws a WalletError with the fix.
+ */
+export async function zingoPreflight(opts: { env?: Record<string, string | undefined>; run?: PreflightRunner; timeoutMs?: number } = {}): Promise<{ docker: string; image: string }> {
+  const env = opts.env ?? process.env;
+  const run = opts.run ?? bunPreflightRunner;
+  const timeoutMs = opts.timeoutMs ?? 5_000;
+  const image = env.ZINGO_IMAGE || ZINGO_IMAGE_DEFAULT;
+  const candidates = env.DOCKER ? [env.DOCKER.split(" ").filter(Boolean)] : [["docker"], ["sudo", "-n", "docker"]];
+  const problems: string[] = [];
+  for (const docker of candidates) {
+    const info = await run([...docker, "version", "--format", "{{.Server.Version}}"], timeoutMs);
+    if (info.code !== 0) {
+      problems.push(`\`${docker.join(" ")}\`: ${info.out.split("\n").filter(Boolean).pop() ?? `exit ${info.code}`}`);
+      continue;
+    }
+    const img = await run([...docker, "image", "inspect", "--format", "{{.Id}}", image], timeoutMs);
+    if (img.code === 0) return { docker: docker.join(" "), image };
+    throw new WalletError(
+      `ZEC_WALLET=zingo: Docker image ${image} not found. Build it once with: docker build -f docker/zingo.Dockerfile -t ${image} docker/ ` +
+        `(a funded testnet wallet in .secrets/ is also needed). For a run without a wallet use ZEC_WALLET=mock.`,
+    );
+  }
+  throw new WalletError(
+    `ZEC_WALLET=zingo needs Docker, but Docker is not reachable within ${timeoutMs / 1000} s (${problems.join("; ")}). ` +
+      `Start Docker (or set DOCKER="sudo -n docker"), then build the image: ${ZINGO_BUILD_HINT}. For a run without a wallet use ZEC_WALLET=mock.`,
+  );
+}
+
 /**
  * Cross-process lock (mkdir is atomic): only one zingo-cli session may own a wallet dir, even when the web
  * server and the CLI run at the same time. The lock dir holds the owner's PID; a lock whose PID is dead is

@@ -107,3 +107,33 @@ describe("ZingoWallet (fake zingo-cli REPL)", () => {
     expect(await w.waitConfirmed(TXID, 60_000)).toBe(true);
   });
 });
+
+describe("zingo preflight (ZEC_WALLET=zingo)", () => {
+  const { zingoPreflight } = require("./zingo") as typeof import("./zingo");
+  test("Docker unreachable: fails with a clear message, tries docker then sudo -n docker", async () => {
+    const calls: string[] = [];
+    const run = async (argv: string[]) => (calls.push(argv.join(" ")), { code: 1, out: "Cannot connect to the Docker daemon" });
+    await expect(zingoPreflight({ env: {}, run })).rejects.toThrow(/Docker is not reachable.*docker build -f docker\/zingo.Dockerfile/);
+    expect(calls.map((c) => c.split(" version")[0])).toEqual(["docker", "sudo -n docker"]);
+  });
+  test("image missing: tells you to build it", async () => {
+    const run = async (argv: string[]) => (argv.includes("image") ? { code: 1, out: "Error: No such image" } : { code: 0, out: "27.0" });
+    await expect(zingoPreflight({ env: {}, run })).rejects.toThrow(/image zecrecharge\/zingo-cli not found.*ZEC_WALLET=mock/);
+  });
+  test("a hung docker call is cut by the timeout (real runner)", async () => {
+    const { bunPreflightRunner } = require("./zingo") as typeof import("./zingo");
+    const t0 = Date.now();
+    const r = await bunPreflightRunner(["sleep", "30"], 300);
+    expect(r.code).toBe(-1);
+    expect(Date.now() - t0).toBeLessThan(3000);
+    const hung = async () => ({ code: -1, out: "timed out after 300 ms" });
+    await expect(zingoPreflight({ env: {}, run: hung, timeoutMs: 300 })).rejects.toThrow(/not reachable within 0.3 s/);
+  });
+  test("a missing docker binary is reported, not thrown raw", async () => {
+    await expect(zingoPreflight({ env: { DOCKER: "/nonexistent/docker-zr" }, timeoutMs: 1000 })).rejects.toThrow(/Docker is not reachable/);
+  });
+  test("ok when Docker answers and the image exists", async () => {
+    const run = async () => ({ code: 0, out: "ok" });
+    expect(await zingoPreflight({ env: { DOCKER: "docker" }, run })).toEqual({ docker: "docker", image: "zecrecharge/zingo-cli" });
+  });
+});

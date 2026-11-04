@@ -21,6 +21,13 @@ BIRTHDAY="${ZINGO_BIRTHDAY:-4581000}"
 if [ -z "${DOCKER:-}" ]; then
   if docker info >/dev/null 2>&1; then DOCKER="docker"; else DOCKER="sudo -n --preserve-env=ZINGO_SEED,RUST_LOG docker"; fi
 fi
+# Preflight (5 s cap): fail fast instead of hanging when Docker or the image is missing.
+# shellcheck disable=SC2086
+if ! timeout 5 $DOCKER image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "error: Docker image $IMAGE not available via '$DOCKER' (Docker down or image not built)." >&2
+  echo "       build it: docker build -f docker/zingo.Dockerfile -t $IMAGE docker/   (or use ZEC_WALLET=mock)" >&2
+  exit 3
+fi
 mkdir -p "$DATA"; chmod 700 "$DATA"
 
 restore=()

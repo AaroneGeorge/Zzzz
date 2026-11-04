@@ -93,6 +93,8 @@ function printStep(r: AgentRun, name: string) {
 }
 
 main().catch((e) => {
-  console.error(e);
+  // Expected setup problems (e.g. the zingo Docker preflight) get one clear line, not a stack trace.
+  if (e instanceof Error && e.name === "WalletError") console.error(c("31", `error: ${e.message}`));
+  else console.error(e);
   process.exit(1);
 });

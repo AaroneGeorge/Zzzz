@@ -9,7 +9,10 @@ const HOST = process.env.HOST || "127.0.0.1";
 const INDEX = join(import.meta.dir, "index.html");
 
 const cfg = configFromEnv();
-const deps = await createDefaultDeps();
+const deps = await createDefaultDeps().catch((e: Error) => {
+  console.error(`error: ${e.message}`);
+  process.exit(1);
+});
 const runs = new Map<string, AgentRun>();
 const listeners = new Map<string, Set<(r: AgentRun) => void>>();
 const pendingConfirm = new Map<string, (ok: boolean) => void>();

@@ -114,6 +114,11 @@ export async function loadAdapters(env: Record<string, string | undefined> = pro
   let bitrefill: BitrefillLike = fakes.createFakeBitrefill();
   let bridge: BridgeFn = fakes.fakeBridgeQuote;
   const sources: NonNullable<AgentDeps["sources"]> = { wallet: "fake", bitrefill: "fake", bridge: "fake" };
+  if (!force && (env.ZEC_WALLET || "").trim().toLowerCase() === "zingo" && !env.ZINGO_CMD) {
+    // Fail fast (no silent fallback, no hang): the operator asked for the real testnet wallet.
+    const z = await import(rel("../wallet/zingo.ts"));
+    await z.zingoPreflight({ env });
+  }
   if (!force) {
     try {
       const m = await import(rel("../wallet/index.ts"));
