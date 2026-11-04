@@ -12,6 +12,7 @@
 //   spendable_balance  -> { spendable_balance: <zat> }
 //   quicksend <to> <zat> "<memo>" -> { txids: [..], transmissions: [..] }
 //   notes              -> [{ value, status, spend_status, memo, txid, ... }] (received incl. self/change)
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ShieldedSend } from "../types";
 import type { MemoEntry, Network, Wallet } from "./types";
@@ -312,20 +313,79 @@ export class ZingoWallet implements Wallet {
 
 /**
  * Cross-process lock (mkdir is atomic): only one zingo-cli session may own a wallet dir, even when the web
- * server and the CLI run at the same time. A lock older than 10 minutes is treated as stale.
+ * server and the CLI run at the same time. The lock dir holds the owner's PID; a lock whose PID is dead is
+ * stale and is taken over at once (a lock without a PID file falls back to the old 10-minute age rule).
+ * Locks held by this process are removed on exit, SIGINT and SIGTERM, so Ctrl-C never leaves one behind.
  */
+const heldLocks = new Set<string>();
+let exitHooksInstalled = false;
+
+function releaseHeldLocks() {
+  for (const l of heldLocks) {
+    try {
+      rmSync(l, { recursive: true, force: true });
+    } catch {
+      /* best effort */
+    }
+  }
+  heldLocks.clear();
+}
+
+function installExitHooks() {
+  if (exitHooksInstalled) return;
+  exitHooksInstalled = true;
+  process.on("exit", releaseHeldLocks);
+  for (const [sig, code] of [["SIGINT", 130], ["SIGTERM", 143]] as const) {
+    process.on(sig, () => {
+      releaseHeldLocks();
+      process.exit(code);
+    });
+  }
+}
+
+/** true if a process with this PID exists (EPERM = exists but owned by another user). */
+export function pidAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
 export async function acquireLock(dir: string, sleepFn: (ms: number) => Promise<void> = sleep, maxWaitMs = 15 * 60_000): Promise<() => void> {
-  const { mkdirSync, rmSync, statSync, existsSync } = await import("node:fs");
   if (!existsSync(dir)) return () => {};
   const lock = join(dir, ".zr-session.lock");
+  const pidFile = join(lock, "pid");
   const deadline = Date.now() + maxWaitMs;
   for (;;) {
     try {
       mkdirSync(lock);
-      return () => rmSync(lock, { recursive: true, force: true });
+      try {
+        writeFileSync(pidFile, String(process.pid));
+      } catch {
+        /* lock still held via the dir; age rule applies to it */
+      }
+      heldLocks.add(lock);
+      installExitHooks();
+      return () => {
+        heldLocks.delete(lock);
+        rmSync(lock, { recursive: true, force: true });
+      };
     } catch {
       try {
-        if (Date.now() - statSync(lock).mtimeMs > 10 * 60_000) rmSync(lock, { recursive: true, force: true });
+        let stale = false;
+        let pid = NaN;
+        try {
+          pid = Number(readFileSync(pidFile, "utf8").trim());
+        } catch {
+          /* no pid file: old lock, or the owner is between mkdir and write */
+        }
+        if (Number.isInteger(pid) && pid > 0) stale = !pidAlive(pid);
+        else stale = Date.now() - statSync(lock).mtimeMs > 10 * 60_000;
+        if (stale) rmSync(lock, { recursive: true, force: true });
+        if (stale) continue;
       } catch {
         /* vanished between calls */
       }
