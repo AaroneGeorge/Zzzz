@@ -23,7 +23,7 @@ async function main() {
   }
   const cfg = configFromEnv();
   const deps = await createDefaultDeps({ ledgerPath });
-  console.log(c("1", `ZecRecharge · agent=${cfg.agentMode} · bitrefill=${cfg.bitrefillMode} · wallet=${cfg.walletKind} · network=${cfg.network}`));
+  console.log(c("1", `ZecRecharge · agent=${cfg.agentMode} · bitrefill=${cfg.bitrefillMode} · wallet=${cfg.walletKind} · gateway=${deps.gateway.view} · network=${cfg.network}`));
   console.log(`sources: wallet=${deps.sources.wallet} bitrefill=${deps.sources.bitrefill} bridge=${deps.sources.bridge} · policy ${deps.policy.hash8}`);
   for (const w of deps.warnings) console.log(c("90", `  note: ${w}`));
   console.log(`request: "${prompt}"\n`);
@@ -37,6 +37,14 @@ async function main() {
         if ((s.status === "running" && s.name === "approve" && r.status === "waiting_human") && !printed.has("wait")) {
           printed.add("wait");
           console.log(c("33", `      ⏸  ${(s.detail as StepDetail).summary}`));
+        }
+        if (s.status === "running" && (s.name === "pay" || s.name === "verify")) {
+          const sum = (s.detail as StepDetail).summary ?? "";
+          const k2 = `${s.name}:run:${sum.replace(/\(\d+ s, poll \d+\)/, "")}`;
+          if (sum && !printed.has(k2)) {
+            printed.add(k2);
+            console.log(c("33", `  …  ${sum}`));
+          }
         }
         if (s.status === "pending" || s.status === "running" || printed.has(key)) continue;
         printed.add(key);
@@ -61,7 +69,7 @@ async function main() {
   for (const n of run.notes) console.log(c("90", n.startsWith("[") ? n : `agent: ${n}`));
   const okCount = run.steps.filter((s) => s.status === "ok").length;
   const st = deps.policy.status();
-  console.log(`\nrun ${run.id}: ${c("1", run.status.toUpperCase())} · ${okCount}/6 steps OK · budget ₹${st.spentTodayInr} spent, ₹${st.remainingInr} left today · ledger ${ledgerPath}`);
+  console.log(`\nrun ${run.id}: ${c("1", run.status.toUpperCase())} · ${okCount}/${run.steps.length} steps OK · budget ₹${st.spentTodayInr} spent, ₹${st.remainingInr} left today · ledger ${ledgerPath}`);
   if (run.error) console.log(c("31", `error: ${run.error}`));
   if (flags.has("--json")) console.log(JSON.stringify(run, null, 2));
   process.exit(run.status === "done" ? 0 : 1);
@@ -77,6 +85,7 @@ function printStep(r: AgentRun, name: string) {
   if (d.error) console.log(c("31", `      ${d.error}`));
   for (const [k, v] of Object.entries(d.ids ?? {})) console.log(c("90", `      ${k}: `) + v);
   for (const l of d.links ?? []) console.log(c("90", `      ${l.label}: `) + c("4", l.url));
+  for (const f of d.facts ?? []) console.log(c(f.holds ? "32" : "90", `      ${f.holds ? "✓" : "✕"} ${f.label}`));
   if (d.secret) console.log(c("90", `      ${d.secret.label}: `) + `${d.secret.value.slice(0, 3)}•••••• (masked; --json to reveal)`);
 }
 

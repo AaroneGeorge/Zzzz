@@ -1,0 +1,43 @@
+{
+  "recordedAt": "2026-11-04T13:17:19.087Z",
+  "data": {
+    "id": "a7542dbe-d02e-4f52-8157-d191a2c9a154",
+    "created_time": "2026-11-04T13:17:15.253Z",
+    "completed_time": "2026-11-04T13:17:15.412Z",
+    "status": "all_delivered",
+    "user": {
+      "id": "6aeb2fcd9aa36a28f8cb99b6",
+      "email": "messiaarlio@gmail.com"
+    },
+    "payment": {
+      "method": "balance",
+      "currency": "BTC",
+      "price": 13418,
+      "status": "complete",
+      "commission": 0
+    },
+    "orders": [
+      {
+        "id": "6aeb305b86d3593f5095d372",
+        "status": "delivered",
+        "product": {
+          "id": "test-gift-card-code",
+          "name": "Test Gift Card Code",
+          "value": "10",
+          "currency": "USD",
+          "image": "us",
+          "_href": "https://api-bitrefill.com/v2/products/test-gift-card-code"
+        },
+        "created_time": "2026-11-04T13:17:15.243Z",
+        "delivered_time": "2026-11-04T13:17:15.381Z",
+        "redemption_info": {
+          "code": "6750419850277890",
+          "instructions": "This field will contain instructions on how to redeem the voucher.",
+          "other": "This field will contain other relevant information like expiration date.",
+          "extra_fields": {}
+        },
+        "commission": 0
+      }
+    ]
+  }
+}

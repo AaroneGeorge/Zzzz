@@ -4,6 +4,7 @@ import type { BridgeQuote, Invoice, Order, PolicyDecision, Product, ShieldedSend
 import { GateError } from "../policy";
 import type { AgentConfig, AgentDeps, InvoiceItem, Mode } from "./deps";
 import type { AgentRun, StepDetail, StepName } from "./state";
+import { GatewayTimeout, MockGateway, testnetPriceZat, VIEW_LABEL, type Gateway, type GatewayInvoice, type GatewayVerification } from "../gateway";
 
 const MODES: Mode[] = ["real", "test", "quote", "fixture", "mock", "manual"];
 function modeField(o: unknown): Mode | undefined {
@@ -37,12 +38,18 @@ export class AgentTools {
   private quote?: BridgeQuote;
   private payment?: ShieldedSend;
   private order?: Order;
+  private gwInvoice?: GatewayInvoice;
+  private brInvoice?: Invoice;
+  private verification?: GatewayVerification;
+  readonly gateway: Gateway;
 
   constructor(
     readonly run: AgentRun,
     readonly deps: AgentDeps,
     readonly cfg: AgentConfig,
-  ) {}
+  ) {
+    this.gateway = deps.gateway ?? new MockGateway();
+  }
 
   // ---------- step bookkeeping ----------
   emit() {
@@ -100,7 +107,7 @@ export class AgentTools {
       const amt = Number(input.amount_inr);
       // Best real match: most query words in the name, then a package worth exactly the requested amount.
       const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
-      const giftRe = input.category === "gift_card" ? /voucher|gift/i : /recharge|top.?up|prepaid|mobile|bundle/i;
+      const giftRe = input.category === "gift_card" ? /voucher|gift|shopping|amazon pay/i : /recharge|top.?up|prepaid|mobile|bundle/i;
       const score = (p: Product) => words.filter((w) => p.name.toLowerCase().includes(w)).length * 10 + (giftRe.test(p.name) ? 5 : 0) + (p.value === amt ? 1 : 0);
       const real = results.filter((p) => !p.isTest).sort((x, y) => score(y) - score(x))[0];
       if (this.cfg.bitrefillMode === "real") {
@@ -200,41 +207,7 @@ export class AgentTools {
     });
   }
 
-  // ---------- 3/6. place_order ----------
-  async place_order(input: { action: "create" | "confirm"; product_id?: string; invoice_id?: string }) {
-    if (input.action === "confirm") return this.confirmOrder(input.invoice_id);
-    return this.guarded("invoice", async () => {
-      const gate = this.deps.policy;
-      const req = gate.authorize(this.run.id, "create_invoice", input.product_id ? { productId: input.product_id } : {});
-      const a = this.approved;
-      if (!a || a.productId !== req.productId) throw new ToolError("no approved product for this run");
-      const item: InvoiceItem = {
-        productId: a.productId,
-        packageId: a.packageId,
-        // Test products use their own (USD) package value; real Indian products the INR face value.
-        value: a.value ?? (a.isTest ? 10 : a.amountInr),
-        quantity: 1,
-        ...(a.phone ? { phoneNumber: a.phone } : {}),
-      };
-      // Test products are paid from the (free) test balance; real ones get an unpaid usdc_base invoice.
-      const paymentMethod = a.isTest ? "balance" : "usdc_base";
-      const inv = await this.deps.bitrefill.createInvoice([item], paymentMethod, { autoPay: a.isTest });
-      this.invoice = inv;
-      const mode = this.bitrefillMode(inv, a.isTest);
-      const ids: Record<string, string> = { invoice_id: inv.id, status: inv.status, payment_method: inv.paymentMethod };
-      if (inv.orderIds?.[0]) ids.order_id = inv.orderIds[0];
-      if (inv.payTo) ids.pay_to = `${inv.payTo.amount} ${inv.payTo.currency} → ${inv.payTo.address}`;
-      this.setStep("invoice", "ok", {
-        mode,
-        summary: `Invoice ${inv.id} (${inv.status}) for ${a.productName}${a.isTest ? ` · free test stand-in for the approved ₹${a.amountInr}` : ` · ₹${a.amountInr}`}`,
-        ids,
-        data: inv,
-      });
-      return { mode, invoice: inv, memo_will_be: gate.memo(inv.id) };
-    });
-  }
-
-  // ---------- 4. quote_bridge ----------
+  // ---------- 3. quote_bridge ----------
   async quote_bridge(input: { amount_inr?: number } = {}) {
     return this.guarded("quote", async () => {
       const a = this.approved;
@@ -262,71 +235,168 @@ export class AgentTools {
     });
   }
 
+  // ---------- 4/7. place_order ----------
+  async place_order(input: { action: "create" | "confirm"; product_id?: string; invoice_id?: string }) {
+    if (input.action === "confirm") return this.confirmOrder(input.invoice_id);
+    return this.guarded("invoice", async () => {
+      const gate = this.deps.policy;
+      const req = gate.authorize(this.run.id, "create_invoice", input.product_id ? { productId: input.product_id } : {});
+      const a = this.approved;
+      if (!a || a.productId !== req.productId) throw new ToolError("no approved product for this run");
+      // The gateway (merchant side) issues the shielded payment request. The Bitrefill order is NOT created here:
+      // it is placed only after the gateway has verified the shielded payment (step "verify").
+      const gw = this.gateway;
+      const price = testnetPriceZat(this.quote?.amountInZec);
+      const g = gw.createInvoice({ runTag: this.run.id.replace(/^run-/, "").slice(-10), amountZat: price.amountZat, memoFor: (id) => gate.memo(id), quotedMainnetZec: this.quote?.amountInZec, pricing: price.pricing });
+      this.gwInvoice = g;
+      const inv: Invoice = { id: g.id, status: "unpaid", paymentMethod: "zcash_shielded_testnet", payTo: { address: g.address, amount: (g.amountZat / 1e8).toFixed(8), currency: "TAZ" }, orderIds: [] };
+      this.invoice = inv;
+      const mode: Mode = gw.view === "mock" ? "mock" : "test";
+      this.setStep("invoice", "ok", {
+        mode,
+        summary: `Gateway invoice ${g.id}: pay ${(g.amountZat / 1e8).toFixed(5)} TAZ to the gateway's shielded address with memo ${g.memo} · ${price.pricing} · Bitrefill order for ${a.productName} is deferred until the gateway verifies the payment`,
+        ids: { gateway_invoice: g.id, pay_to: shorten(g.address), amount: `${(g.amountZat / 1e8).toFixed(8)} TAZ (testnet stand-in)`, quoted_mainnet: this.quote ? `${this.quote.amountInZec} ZEC` : "-", memo: g.memo },
+        data: { gatewayInvoice: g, approved: { product: a.productId, amountInr: a.amountInr } },
+      });
+      return { mode, invoice: inv, memo_will_be: g.memo, note: "Pay this gateway invoice with pay_shielded, then place_order confirm (the gateway verifies before the Bitrefill order is placed)." };
+    });
+  }
+
   // ---------- 5. pay_shielded ----------
   async pay_shielded(input: { invoice_id: string }) {
     return this.guarded("pay", async () => {
       const gate = this.deps.policy;
       gate.authorize(this.run.id, "pay_shielded");
-      const inv = this.invoice;
-      if (!inv) throw new ToolError("create the invoice (place_order create) before paying");
-      if (input.invoice_id && input.invoice_id !== inv.id) throw new ToolError(`invoice ${input.invoice_id} is not this run's invoice (${inv.id})`);
+      const g = this.gwInvoice;
+      if (!g) throw new ToolError("create the gateway invoice (place_order create) before paying");
+      if (input.invoice_id && input.invoice_id !== g.id) throw new ToolError(`invoice ${input.invoice_id} is not this run's invoice (${g.id})`);
       if (this.payment) throw new ToolError("already paid");
-      const memo = gate.memo(inv.id);
-      const to = this.cfg.destAddress ?? (await this.deps.wallet.getAddress());
-      const amountZat = this.cfg.testnetSendZat;
-      const send = await this.deps.wallet.send(to, amountZat, memo);
+      const memo = gate.memo(g.id);
+      const real = this.cfg.walletKind === "zingo";
+      this.setStep("pay", "running", {
+        mode: real ? "test" : undefined,
+        summary: real
+          ? `Broadcasting: zingo-cli syncs, builds the shielded proof and broadcasts ${(g.amountZat / 1e8).toFixed(5)} TAZ to the gateway (≈30–60 s)…`
+          : "Sending…",
+      });
+      const send = await this.deps.wallet.send(g.address, g.amountZat, memo);
       this.payment = send;
       const isMock = (send as { mock?: boolean }).mock === true || (send.mode as string) === "mock" || this.cfg.walletKind === "mock" || this.deps.sources?.wallet === "fake";
       const mode: Mode = isMock ? "mock" : send.mode === "manual" ? "manual" : send.network === "mainnet" ? "real" : "test";
-      gate.recordSpend(this.run.id, { invoiceId: inv.id, txid: send.txid, mode });
+      gate.recordSpend(this.run.id, { invoiceId: g.id, txid: send.txid, mode });
       const explorerUrl = send.explorerUrl || `https://testnet.zcashexplorer.app/transactions/${send.txid}`;
       this.setStep("pay", "ok", {
         mode,
-        summary: `${(amountZat / 1e8).toFixed(8).replace(/0+$/, "")} ${send.network === "testnet" ? "TAZ" : "ZEC"} shielded on ${send.network} via ${isMock ? "mock wallet" : send.mode} · memo ${memo}${isMock ? " · MOCK txid, nothing on chain" : send.confirmed ? " · confirmed" : " · broadcast, waiting for a block"}`,
-        ids: { txid: send.txid, memo, to: shorten(send.to), network: send.network },
+        summary: `${(g.amountZat / 1e8).toFixed(5)} ${send.network === "testnet" ? "TAZ" : "ZEC"} shielded on ${send.network} via ${isMock ? "mock wallet" : send.mode} to the gateway · memo ${memo}${isMock ? " · MOCK txid, nothing on chain" : " · broadcast, waiting for a block"}`,
+        ids: { txid: send.txid, memo, to: `gateway ${shorten(send.to)}`, network: send.network },
         links: isMock ? [] : [{ label: "Zcash testnet explorer", url: explorerUrl }],
-        data: { ...send, quotedMainnetZec: this.quote?.amountInZec },
+        data: { ...send, quotedMainnetZec: this.quote?.amountInZec, pricing: g.pricing },
       });
-      if (!send.confirmed && !isMock && this.cfg.confirmWaitMs > 0) this.watchConfirm(send);
-      return { mode, txid: send.txid, memo, network: send.network, explorer_url: isMock ? null : explorerUrl, confirmed: send.confirmed };
+      return { mode, txid: send.txid, memo, network: send.network, explorer_url: isMock ? null : explorerUrl, next: "call place_order with action confirm; the gateway verifies the payment first" };
     });
   }
 
-  private watchConfirm(send: ShieldedSend) {
-    this.deps.wallet
-      .waitConfirmed(send.txid, this.cfg.confirmWaitMs)
-      .then((ok) => {
-        if (!ok) return;
-        const s = this.step("pay");
-        const d = s.detail as StepDetail;
-        d.summary = (d.summary ?? "").replace("broadcast, waiting for a block", "confirmed on-chain");
-        d.data = { ...(d.data as object), confirmed: true };
-        this.emit();
-      })
-      .catch(() => {});
+  // ---------- 6. gateway verification (runs inside place_order confirm, in code) ----------
+  private async verifyPayment(): Promise<GatewayVerification> {
+    if (this.verification) return this.verification;
+    return this.guarded("verify", async () => {
+      const g = this.gwInvoice;
+      const send = this.payment;
+      if (!g || !send) throw new ToolError("pay_shielded must succeed before the gateway can verify");
+      const gw = this.gateway;
+      const mode: Mode = gw.view === "mock" ? "mock" : "test";
+      const how = VIEW_LABEL[gw.view];
+      this.setStep("verify", "running", { mode, summary: `Gateway is scanning with its ${how} for memo ${g.memo} and ≥ ${(g.amountZat / 1e8).toFixed(5)} TAZ…` });
+      const started = Date.now();
+      try {
+        const v = await gw.waitForPayment(g, {
+          timeoutMs: this.cfg.gatewayTimeoutMs,
+          sent: { txid: send.txid, amountZat: send.amountZat, memo: send.memo, to: send.to },
+          onProgress: (p) => {
+            const secs = Math.round((Date.now() - started) / 1000);
+            this.setStep("verify", "running", {
+              mode,
+              summary: p.inMempool
+                ? `Gateway sees tx ${p.inMempool.txid.slice(0, 10)}… with the right memo in the mempool · waiting for it to be mined (${secs} s, poll ${p.polls})`
+                : `Gateway scanning (${how}) · not seen yet (${secs} s, poll ${p.polls})${p.lastError ? ` · retrying after: ${p.lastError.slice(0, 120)}` : ""}`,
+            });
+          },
+        });
+        this.verification = v;
+        const pay = this.step("pay");
+        const pd = pay.detail as StepDetail;
+        if (v.height) {
+          pd.summary = (pd.summary ?? "").replace("broadcast, waiting for a block", `mined at height ${v.height.toLocaleString("en-US")}`);
+          pd.ids = { ...(pd.ids ?? {}), height: String(v.height) };
+        }
+        pd.data = { ...(pd.data as object), confirmed: true, height: v.height };
+        this.setStep("verify", "ok", {
+          mode,
+          summary: `Verified ${(v.amountZat / 1e8).toFixed(5)} TAZ (≥ ${(g.amountZat / 1e8).toFixed(5)} expected) with memo ${v.memo}${v.height ? ` · mined at height ${v.height.toLocaleString("en-US")}` : ""} · decrypted by the ${how}`,
+          ids: { txid: v.txid, height: v.height ? String(v.height) : "-", amount: `${v.amountZat} zat`, memo: v.memo, gateway_invoice: g.id, view: gw.view },
+          links: gw.view === "mock" ? [] : [{ label: "Explorer (shows only 'shielded')", url: `https://testnet.zcashexplorer.app/transactions/${v.txid}` }],
+          facts: [
+            { label: "On chain the amount, sender, recipient and memo are encrypted; the explorer shows only a shielded tx and its fee", holds: gw.view !== "mock" },
+            { label: "The gateway decrypts amount + memo with its viewing key" + (gw.view === "ufvk" ? " (view-only UFVK wallet: it cannot spend)" : gw.view === "wallet" ? " (here: its full wallet; UFVK wallet unavailable)" : " (mock)"), holds: gw.view !== "mock" },
+            { label: "The gateway never learns the agent's address (shielded sender)", holds: true },
+            { label: "Bitrefill sees only the order for the invoice, never a Zcash address, txid or memo", holds: true },
+            { label: "Caveat: the lightwalletd server sees our IP (this build runs without the Nym mixnet)", holds: gw.view !== "mock" },
+          ],
+          data: { verification: v, pricing: g.pricing },
+        });
+        return v;
+      } catch (e) {
+        if (e instanceof GatewayTimeout) {
+          this.setStep("deliver", "skipped", { mode: this.bitrefillMode(undefined, true), summary: "NOT placed: the gateway did not verify the shielded payment, so no Bitrefill order was created" });
+          throw new ToolError(`${e.message}. No Bitrefill order was placed.`);
+        }
+        throw e;
+      }
+    });
   }
 
   private async confirmOrder(invoiceId?: string) {
+    if (!this.payment) {
+      // gate first (so an unapproved model sees POLICY GATE), then the payment check
+      this.deps.policy.authorize(this.run.id, "confirm_order");
+      throw new ToolError("pay_shielded must succeed before the order is confirmed");
+    }
+    if (invoiceId && this.gwInvoice && invoiceId !== this.gwInvoice.id && invoiceId !== this.brInvoice?.id) throw new ToolError(`invoice ${invoiceId} is not this run's invoice`);
+    const v = await this.verifyPayment(); // throws (and skips deliver) if the gateway can't verify
     return this.guarded("deliver", async () => {
       const gate = this.deps.policy;
       gate.authorize(this.run.id, "confirm_order");
-      if (!this.payment) throw new ToolError("pay_shielded must succeed before the order is confirmed");
-      const inv0 = this.invoice!;
-      if (invoiceId && invoiceId !== inv0.id) throw new ToolError(`invoice ${invoiceId} is not this run's invoice`);
-      const isTest = this.approved?.isTest ?? false;
-      let inv = inv0;
-      try {
-        inv = await this.deps.bitrefill.getInvoice(inv0.id);
-      } catch {
-        /* keep the creation snapshot */
+      if (!v.verified) throw new ToolError("gateway verification missing");
+      const a = this.approved!;
+      const isTest = a.isTest;
+      const item: InvoiceItem = {
+        productId: a.productId,
+        packageId: a.packageId,
+        // Test products use their own (USD) package value; real Indian products the INR face value.
+        value: a.value ?? (isTest ? 10 : a.amountInr),
+        quantity: 1,
+        ...(a.phone ? { phoneNumber: a.phone } : {}),
+      };
+      // Test products are paid from the (free) test balance with auto_pay; a real product only ever gets an
+      // UNPAID usdc_base invoice (shown as awaiting payment, never claimed paid).
+      const paymentMethod = isTest ? "balance" : "usdc_base";
+      let inv = await this.deps.bitrefill.createInvoice([item], paymentMethod, { autoPay: isTest });
+      this.brInvoice = inv;
+      const deadline = Date.now() + this.cfg.orderPollMs;
+      while (!inv.orderIds?.[0] && isTest && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          inv = await this.deps.bitrefill.getInvoice(inv.id);
+        } catch {
+          break;
+        }
       }
-      const orderId = inv.orderIds?.[0] ?? inv0.orderIds?.[0];
+      const orderId = inv.orderIds?.[0];
       if (!orderId) {
-        this.setStep("deliver", "skipped", { mode: this.bitrefillMode(inv, isTest), summary: `Invoice ${inv.id} is ${inv.status}: no order yet (awaiting payment, nothing delivered)`, ids: { invoice_id: inv.id, status: inv.status } });
+        this.setStep("deliver", "skipped", { mode: this.bitrefillMode(inv, isTest), summary: `Bitrefill invoice ${inv.id} is ${inv.status}: no order yet (awaiting payment, nothing delivered)`, ids: { bitrefill_invoice: inv.id, status: inv.status, gateway_txid: v.txid } });
         return { delivered: false, invoice_status: inv.status };
       }
       let order = await this.deps.bitrefill.getOrder(orderId);
-      const deadline = Date.now() + this.cfg.orderPollMs;
       while (!order.code && !order.link && !/deliver|complete|success/i.test(order.status) && Date.now() < deadline && !/unpaid|awaiting/i.test(order.status + inv.status)) {
         await new Promise((r) => setTimeout(r, 2000));
         order = await this.deps.bitrefill.getOrder(orderId);
@@ -336,16 +406,16 @@ export class AgentTools {
       const delivered = Boolean(order.code || order.link || /deliver|complete|success/i.test(order.status));
       const detail: Partial<StepDetail> = {
         mode,
-        ids: { order_id: order.id, invoice_id: inv.id, status: order.status },
-        data: { ...order, code: order.code ? "(masked in UI)" : undefined },
+        ids: { bitrefill_invoice: inv.id, order_id: order.id, status: order.status, unlocked_by: `gateway ${v.invoiceId} · tx ${v.txid.slice(0, 12)}…` },
+        data: { ...order, code: order.code ? "(masked in UI)" : undefined, invoice: inv },
         summary: delivered
-          ? `${mode === "fixture" ? "Fixture order" : isTest ? "Test order" : "Order"} ${order.id} ${order.status}${order.instructions ? ` · ${order.instructions}` : ""}`
+          ? `${mode === "fixture" ? "Fixture order" : isTest ? "Bitrefill TEST order" : "Order"} ${order.id} ${order.status}, placed after the gateway verified tx ${v.txid.slice(0, 10)}…${isTest ? ` · free test stand-in for the approved ₹${a.amountInr} ${a.productName === a.productId ? "" : ""}`.trimEnd() : ""}${order.instructions ? ` · ${order.instructions}` : ""}`
           : `Order ${order.id} is ${order.status} (not delivered; invoice ${inv.status})`,
       };
       if (order.code) detail.secret = { label: "Redemption code", value: order.code };
       if (order.link) detail.links = [{ label: "Redemption link", url: order.link }];
       this.setStep("deliver", delivered ? "ok" : "skipped", detail);
-      return { delivered, mode, order_id: order.id, status: order.status, has_code: Boolean(order.code) };
+      return { delivered, mode, order_id: order.id, bitrefill_invoice: inv.id, status: order.status, has_code: Boolean(order.code), verified_txid: v.txid, height: v.height };
     });
   }
 
@@ -357,7 +427,7 @@ export class AgentTools {
     }
     // The quote is informational and delivery may legitimately wait for payment;
     // a run is "done" when search, approval, invoice and the shielded payment succeeded.
-    const core = ["search", "approve", "invoice", "pay"].every((n) => this.step(n as StepName).status === "ok");
+    const core = ["search", "approve", "invoice", "pay", "verify"].every((n) => this.step(n as StepName).status === "ok");
     if (this.run.status === "running" || this.run.status === "waiting_human") this.run.status = core ? "done" : "failed";
     this.run.needsHuman = false;
     this.run.finishedAt = new Date().toISOString();

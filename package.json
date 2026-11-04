@@ -9,7 +9,9 @@
     "demo": "bun run src/cli.ts",
     "serve": "bun run src/web/server.ts",
     "wallet:selftest": "bun run scripts/wallet-selftest.ts",
-    "bitrefill:selftest": "bun run scripts/bitrefill-selftest.ts"
+    "bitrefill:selftest": "bun run scripts/bitrefill-selftest.ts",
+    "gateway:selftest": "bun run scripts/gateway-selftest.ts",
+    "wallet:split": "bun run scripts/wallet-split.ts"
   },
   "license": "MIT",
   "dependencies": {

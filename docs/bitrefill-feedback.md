@@ -228,3 +228,35 @@ OpenAPI reference (`docs.bitrefill.com/reference/*.md`), not from live calls. Th
 - The Base burn address `0x…dEaD` as `recipient` returns 400 "recipient is not valid".
 - A dry quote (`dry:true`) needs no key or JWT and returns 201 with no `depositAddress` and no quote id; use
   `correlationId` as the reference. The schema and examples are at `https://1click.chaindefuser.com/docs/v0/openapi.yaml`.
+
+---
+
+## REST v2 with a real API key (verified live, 2026-11-04 18:50–19:00 IST, integration)
+
+These were hit with a real `BITREFILL_API_KEY`, `BITREFILL_MODE=test`, on an account whose balance is **0 BTC**.
+
+- **Works (verified live):** a test-product invoice with `payment_method=balance` and `auto_pay=true` completes at
+  zero cost on a 0-BTC account. `test-gift-card-code` and `test-phone-refill` both went `delivered` (the recorded gift-card
+  order took about 140 ms from `created_time` to `delivered_time`). `GET /v2/accounts/balance` still returned `{"balance":0,"currency":"BTC"}`
+  afterwards. Orders from our end-to-end runs: `6aeb31f068f1cc1b9af1659d` (test-phone-refill),
+  `6aeb326986d3593f50960265` (test-gift-card-code).
+- **Confusing (verified live):** the paid test invoice reports `payment: {method: "balance", currency: "BTC",
+  price: 13418, status: "complete", commission: 0}`. That looks like a real 13,418-sat balance payment, but the
+  balance stays at 0 and nothing in the payment or order says "test". Expected: an explicit `test: true` (or
+  `payment.status: "test_autopaid"`) on the invoice and order. Fix: add an `is_test` flag to invoice and order objects.
+- **Needs polling (verified live):** the `POST /v2/invoices` response comes back with status `not_delivered`. Only a
+  re-fetch with `GET /v2/invoices/{id}` shows `all_delivered`, even for instant test products. Expected: either
+  document the state machine (`not_delivered` → `all_delivered`) with a typical latency, or return the delivered
+  state synchronously when `auto_pay` completes inside the request.
+- **Docs path mismatch (verified live):** the balance endpoint is `GET /v2/accounts/balance`.
+  `GET /v2/account/balance` returns an Express HTML 404 page ("Cannot GET …") instead of a JSON error. Fix: return
+  JSON 404s everywhere under `/v2`.
+- **Test-product discovery (verified live):** `GET /v2/products/search?q=test&include_test_products=true` returns
+  16 test products, including `-syldavia` and `*-fail` variants such as `test-phone-refill-fail` and
+  `test-gift-card-code-fail`. That is useful for negative tests, but the variants are not listed in the docs.
+- **Search relevance (verified live):** with the key, `GET /v2/products/search?q=Amazon` for India returned only
+  "Amazon Fresh India" packages (₹50 to ₹10,000). Guest MCP `search-products` for "amazon" in IN lists Amazon Fresh,
+  Amazon Prime and "Amazon.in Shopping India", but the last one shows `in_stock=false`. So an agent asked for an
+  "Amazon Pay gift card" ends up matching a grocery card. Expected: the vouchers are findable, or there is a clear
+  out-of-stock signal in v2 search too. Fix: add a product `category`/`type` and `in_stock` field to v2 search results.
+  ZecRecharge only shows the match and buys the free test product, so no money was at risk.

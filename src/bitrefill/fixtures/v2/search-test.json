@@ -1,0 +1,1090 @@
+{
+  "recordedAt": "2026-11-04T13:17:15.089Z",
+  "data": [
+    {
+      "id": "test-gift-card-code",
+      "name": "Test Gift Card Code",
+      "base_name": "Test Gift Card Code",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [
+        "online"
+      ],
+      "created_time": "2021-10-21T12:04:11.677Z",
+      "recipient_type": "none",
+      "image": "us",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "range": {
+        "min": 10,
+        "max": 100,
+        "step": 10,
+        "price_rate": 1341.3735191517285
+      },
+      "packages": [
+        {
+          "id": "test-gift-card-code<&>10",
+          "value": "10",
+          "price": 13414,
+          "amount": 10
+        },
+        {
+          "id": "test-gift-card-code<&>20",
+          "value": "20",
+          "price": 26828,
+          "amount": 20
+        },
+        {
+          "id": "test-gift-card-code<&>30",
+          "value": "30",
+          "price": 40242,
+          "amount": 30
+        },
+        {
+          "id": "test-gift-card-code<&>50",
+          "value": "50",
+          "price": 67069,
+          "amount": 50
+        },
+        {
+          "id": "test-gift-card-code<&>100",
+          "value": "100",
+          "price": 134138,
+          "amount": 100
+        }
+      ]
+    },
+    {
+      "id": "userify-test-syldavia",
+      "name": "Userify Test",
+      "base_name": "Userify Test",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "games"
+      ],
+      "redemption_methods": [],
+      "created_time": "2026-04-02T10:18:11.171Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "userify-test-syldavia<&>1",
+          "value": "1",
+          "price": 16,
+          "amount": 0.01
+        },
+        {
+          "id": "userify-test-syldavia<&>5",
+          "value": "5",
+          "price": 76,
+          "amount": 0.05
+        },
+        {
+          "id": "userify-test-syldavia<&>10",
+          "value": "10",
+          "price": 152,
+          "amount": 0.1
+        }
+      ]
+    },
+    {
+      "id": "userify-cashback-test-syldavia",
+      "name": "Userify Cashback Test",
+      "base_name": "Userify Cashback Test",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "apparel"
+      ],
+      "redemption_methods": [],
+      "created_time": "2026-06-12T07:32:59.490Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "userify-cashback-test-syldavia<&>0.25",
+          "value": "0.25",
+          "price": 378,
+          "amount": 0.25
+        },
+        {
+          "id": "userify-cashback-test-syldavia<&>0.50",
+          "value": "0.50",
+          "price": 756,
+          "amount": 0.5
+        },
+        {
+          "id": "userify-cashback-test-syldavia<&>0.85",
+          "value": "0.85",
+          "price": 1285,
+          "amount": 0.85
+        },
+        {
+          "id": "userify-cashback-test-syldavia<&>1",
+          "value": "1",
+          "price": 1512,
+          "amount": 1
+        },
+        {
+          "id": "userify-cashback-test-syldavia<&>2",
+          "value": "2",
+          "price": 3023,
+          "amount": 2
+        },
+        {
+          "id": "userify-cashback-test-syldavia<&>5",
+          "value": "5",
+          "price": 7556,
+          "amount": 5
+        },
+        {
+          "id": "userify-cashback-test-syldavia<&>8",
+          "value": "8",
+          "price": 12089,
+          "amount": 8
+        }
+      ]
+    },
+    {
+      "id": "test-esim-product",
+      "name": "Test eSIM product",
+      "base_name": "Test eSIM product",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "esim"
+      ],
+      "redemption_methods": [],
+      "created_time": "2025-11-07T14:04:26.764Z",
+      "recipient_type": "mixed",
+      "image": "this_is_a_test",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-esim-product<&>1GB, 7 Days",
+          "value": "1GB, 7 Days",
+          "price": 1342,
+          "amount": 1
+        },
+        {
+          "id": "test-esim-product<&>2GB, 15 Days",
+          "value": "2GB, 15 Days",
+          "price": 2683,
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "id": "test-esim-subscription-pro-syldavia",
+      "name": "Esim World subscription test product Pro",
+      "base_name": "Esim World subscription test product Pro",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "esim"
+      ],
+      "redemption_methods": [],
+      "created_time": "2025-08-01T15:03:34.067Z",
+      "recipient_type": "mixed",
+      "image": "test-esim-subscription-syldavia",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 6 Days Before Expiry Above 20% Combined Subscription",
+          "value": "1GB, 7 Days 6 Days Before Expiry Above 20% Combined Subscription",
+          "price": 152,
+          "amount": 0.1
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 6 Days Before Expiry Less Than 20% Combined Subscription",
+          "value": "1GB, 7 Days 6 Days Before Expiry Less Than 20% Combined Subscription",
+          "price": 303,
+          "amount": 0.2
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 12 Hours Before Expiry More Than 20% Combined Subscription",
+          "value": "1GB, 7 Days 12 Hours Before Expiry More Than 20% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 12 Hours Before Expiry Less Than 20% Combined Subscription",
+          "value": "1GB, 7 Days 12 Hours Before Expiry Less Than 20% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 2 Days Before Expiry Above 50% Combined Subscription",
+          "value": "1GB, 7 Days 2 Days Before Expiry Above 50% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 2 Days Before Expiry Below 50% Combined Subscription",
+          "value": "1GB, 7 Days 2 Days Before Expiry Below 50% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 2 Days Before Expiry Close 50% Combined Subscription",
+          "value": "1GB, 7 Days 2 Days Before Expiry Close 50% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 6 Days Before Expiry Close 50% Combined Subscription",
+          "value": "1GB, 7 Days 6 Days Before Expiry Close 50% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days 1 Day Before Expiry Close 50% Combined Subscription",
+          "value": "1GB, 7 Days 1 Day Before Expiry Close 50% Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Insufficient Balance Combined Subscription",
+          "value": "1GB, 7 Days Insufficient Balance Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Pricing Change Combined Subscription",
+          "value": "1GB, 7 Days Pricing Change Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Incompatibility Error Combined Subscription",
+          "value": "1GB, 7 Days Incompatibility Error Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Incompatibility Error Api Issue Combined Subscription",
+          "value": "1GB, 7 Days Incompatibility Error Api Issue Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Temporary Delivery Error Combined Subscription",
+          "value": "1GB, 7 Days Temporary Delivery Error Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Permanent Delivery Error Combined Subscription",
+          "value": "1GB, 7 Days Permanent Delivery Error Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>1GB, 7 Days Queued Package Combined Subscription",
+          "value": "1GB, 7 Days Queued Package Combined Subscription",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>Unlimited, 10 Days,12 Hours Before Expiry Subscription",
+          "value": "Unlimited, 10 Days,12 Hours Before Expiry Subscription",
+          "price": 16,
+          "amount": 0.01
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>Unlimited, 10 Days, 1 Day and 5 minute Before Expiry Subscription",
+          "value": "Unlimited, 10 Days, 1 Day and 5 minute Before Expiry Subscription",
+          "price": 16,
+          "amount": 0.01
+        },
+        {
+          "id": "test-esim-subscription-pro-syldavia<&>Unlimited, 10 Days,Queued Subscription",
+          "value": "Unlimited, 10 Days,Queued Subscription",
+          "price": 16,
+          "amount": 0.01
+        }
+      ]
+    },
+    {
+      "id": "test-esim-data-syldavia",
+      "name": "Esim World data test product",
+      "base_name": "Esim World data test product",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "esim"
+      ],
+      "redemption_methods": [],
+      "created_time": "2025-01-17T14:10:45.647Z",
+      "recipient_type": "mixed",
+      "image": "test-esim-data-syldavia",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-esim-data-syldavia<&>0/10GB, 1 Day",
+          "value": "0/10GB, 1 Day",
+          "price": 18133,
+          "amount": 12
+        },
+        {
+          "id": "test-esim-data-syldavia<&>1/10GB, 1 Day",
+          "value": "1/10GB, 1 Day",
+          "price": 27200,
+          "amount": 18
+        },
+        {
+          "id": "test-esim-data-syldavia<&>7/10GB, 1 Day",
+          "value": "7/10GB, 1 Day",
+          "price": 34539,
+          "amount": 24
+        },
+        {
+          "id": "test-esim-data-syldavia<&>10/10GB, 1 Day",
+          "value": "10/10GB, 1 Day",
+          "price": 45333,
+          "amount": 30
+        },
+        {
+          "id": "test-esim-data-syldavia<&>Unlimited, 10 Days",
+          "value": "Unlimited, 10 Days",
+          "price": 30222,
+          "amount": 20
+        },
+        {
+          "id": "test-esim-data-syldavia<&>Unlimited, 30 Days",
+          "value": "Unlimited, 30 Days",
+          "price": 30222,
+          "amount": 20
+        }
+      ]
+    },
+    {
+      "id": "test-esim-duration-syldavia",
+      "name": "Esim World duration test product!",
+      "base_name": "Esim World duration test product!",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "esim"
+      ],
+      "redemption_methods": [],
+      "created_time": "2025-01-17T14:10:45.643Z",
+      "recipient_type": "mixed",
+      "image": "test-esim-duration-syldavia",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-esim-duration-syldavia<&>1GB, 0 Days",
+          "value": "1GB, 0 Days",
+          "price": 9067,
+          "amount": 6
+        },
+        {
+          "id": "test-esim-duration-syldavia<&>1GB, 1 Minute",
+          "value": "1GB, 1 Minute",
+          "price": 12089,
+          "amount": 8
+        },
+        {
+          "id": "test-esim-duration-syldavia<&>1GB, 1 Hour",
+          "value": "1GB, 1 Hour",
+          "price": 18133,
+          "amount": 12
+        },
+        {
+          "id": "test-esim-duration-syldavia<&>1GB, 1 Day",
+          "value": "1GB, 1 Day",
+          "price": 27200,
+          "amount": 18
+        },
+        {
+          "id": "test-esim-duration-syldavia<&>1GB, 7 Days",
+          "value": "1GB, 7 Days",
+          "price": 36266,
+          "amount": 24
+        },
+        {
+          "id": "test-esim-duration-syldavia<&>1GB, 30 Days",
+          "value": "1GB, 30 Days",
+          "price": 45333,
+          "amount": 30
+        }
+      ]
+    },
+    {
+      "id": "health-check-syldavia",
+      "name": "Health check test product",
+      "base_name": "Health check test product",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [
+        "online"
+      ],
+      "created_time": "2023-08-30T13:41:55.499Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "health-check-syldavia<&>10",
+          "value": "10",
+          "price": 14809,
+          "amount": 10
+        },
+        {
+          "id": "health-check-syldavia<&>25",
+          "value": "25",
+          "price": 37022,
+          "amount": 25
+        }
+      ]
+    },
+    {
+      "id": "test-kitchen-philippines",
+      "name": "Test Kitchen Philippines",
+      "base_name": "Test Kitchen",
+      "country_code": "PH",
+      "country_name": "Philippines",
+      "currency": "PHP",
+      "categories": [
+        "food",
+        "restaurants"
+      ],
+      "redemption_methods": [
+        "instore"
+      ],
+      "created_time": "2022-11-03T14:30:54.936Z",
+      "recipient_type": "none",
+      "image": "test-kitchen-philippines",
+      "logo_background": "#f07957",
+      "description": "The Test Kitchen has evolved from a tasting room to a proper restaurant. Casual yet sophisticated. Upscale yet ingredients driven. It is the only Filipino restaurant to make it to CNN Travel's best new Asia-Pacific restaurants to try in 2020. This is a place to celebrate special occasions or celebrations you can enjoy with your friends and family. With its cozy and sophisticated atmosphere, incredible service, and outstanding variety of menu. They are located at One Rockwell G/F East tower, Rockwell Dr, Rockwell, Makati, 1211 Metro Manila. For more information, visit their facebook page here. For their Instagram, you click on this link. Enjoy your gift!",
+      "termsAndConditions": "Gifted.PH will verify all orders before processing. The gift certificate is valid immediately after receiving it. It can be redeemed in all of merchant’s branches and can be used to pay for anything for sale in the store. It has no expiry date, is non-refundable, non-convertible to cash, is for one time use only and cannot be used in conjunction with other promos or discounts. It cannot be used to purchase gift certificates. Unused amounts will be forfeited. Extra charges will apply to items purchased in excess of the value of the gift certificate. Both Gifted.PH and the merchant are not responsible for lost or stolen gift certificate. The Merchant is responsible for the quality of their own products and services. Merchant prices may change without prior notice and may be subject to additional charges.",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-kitchen-philippines<&>10000",
+          "value": "10000",
+          "price": 220410,
+          "amount": 10000
+        },
+        {
+          "id": "test-kitchen-philippines<&>5000",
+          "value": "5000",
+          "price": 110205,
+          "amount": 5000
+        },
+        {
+          "id": "test-kitchen-philippines<&>2000",
+          "value": "2000",
+          "price": 44082,
+          "amount": 2000
+        },
+        {
+          "id": "test-kitchen-philippines<&>1000",
+          "value": "1000",
+          "price": 22041,
+          "amount": 1000
+        }
+      ]
+    },
+    {
+      "id": "test-phone-refill-fail",
+      "name": "Test Phone Refill (Fail)",
+      "base_name": "Test Phone Refill (Fail)",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "phone"
+      ],
+      "redemption_methods": [],
+      "created_time": "2021-10-21T12:04:11.697Z",
+      "recipient_type": "phone_number",
+      "image": "this_is_a_test",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "range": {
+        "min": 10,
+        "max": 100,
+        "step": 10,
+        "price_rate": 1341.3735191517285
+      },
+      "packages": [
+        {
+          "id": "test-phone-refill-fail<&>10",
+          "value": "10",
+          "price": 13414
+        },
+        {
+          "id": "test-phone-refill-fail<&>20",
+          "value": "20",
+          "price": 26828
+        },
+        {
+          "id": "test-phone-refill-fail<&>30",
+          "value": "30",
+          "price": 40242
+        },
+        {
+          "id": "test-phone-refill-fail<&>40",
+          "value": "40",
+          "price": 53655
+        },
+        {
+          "id": "test-phone-refill-fail<&>50",
+          "value": "50",
+          "price": 67069
+        },
+        {
+          "id": "test-phone-refill-fail<&>60",
+          "value": "60",
+          "price": 80483
+        },
+        {
+          "id": "test-phone-refill-fail<&>70",
+          "value": "70",
+          "price": 93897
+        },
+        {
+          "id": "test-phone-refill-fail<&>80",
+          "value": "80",
+          "price": 107310
+        },
+        {
+          "id": "test-phone-refill-fail<&>90",
+          "value": "90",
+          "price": 120724
+        },
+        {
+          "id": "test-phone-refill-fail<&>100",
+          "value": "100",
+          "price": 134138
+        }
+      ]
+    },
+    {
+      "id": "test-gift-card-code-fail",
+      "name": "Test Gift Card Code (Fail)",
+      "base_name": "Test Gift Card Code (Fail)",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [
+        "online"
+      ],
+      "created_time": "2021-10-21T12:04:11.694Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "range": {
+        "min": 10,
+        "max": 100,
+        "step": 10,
+        "price_rate": 1341.3735191517285
+      },
+      "packages": [
+        {
+          "id": "test-gift-card-code-fail<&>10",
+          "value": "10",
+          "price": 13414,
+          "amount": 10
+        },
+        {
+          "id": "test-gift-card-code-fail<&>20",
+          "value": "20",
+          "price": 26828,
+          "amount": 20
+        },
+        {
+          "id": "test-gift-card-code-fail<&>30",
+          "value": "30",
+          "price": 40242,
+          "amount": 30
+        },
+        {
+          "id": "test-gift-card-code-fail<&>50",
+          "value": "50",
+          "price": 67069,
+          "amount": 50
+        },
+        {
+          "id": "test-gift-card-code-fail<&>100",
+          "value": "100",
+          "price": 134138,
+          "amount": 100
+        }
+      ]
+    },
+    {
+      "id": "test-gift-card-link-fail",
+      "name": "Test Gift Card Link (Fail)",
+      "base_name": "Test Gift Card Link (Fail)",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [],
+      "created_time": "2021-10-21T12:04:11.684Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-gift-card-link-fail<&>Dinner for One",
+          "value": "Dinner for One",
+          "price": 26828,
+          "amount": 20
+        },
+        {
+          "id": "test-gift-card-link-fail<&>Dinner for Two",
+          "value": "Dinner for Two",
+          "price": 53655,
+          "amount": 40
+        }
+      ]
+    },
+    {
+      "id": "test-phone-refill",
+      "name": "Test Phone Refill",
+      "base_name": "Test Phone Refill",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "phone"
+      ],
+      "redemption_methods": [],
+      "created_time": "2021-10-21T12:04:11.679Z",
+      "recipient_type": "phone_number",
+      "image": "this_is_a_test",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "range": {
+        "min": 10,
+        "max": 100,
+        "step": 10,
+        "price_rate": 1341.3735191517285
+      },
+      "packages": [
+        {
+          "id": "test-phone-refill<&>10",
+          "value": "10",
+          "price": 13414
+        },
+        {
+          "id": "test-phone-refill<&>20",
+          "value": "20",
+          "price": 26828
+        },
+        {
+          "id": "test-phone-refill<&>30",
+          "value": "30",
+          "price": 40242
+        },
+        {
+          "id": "test-phone-refill<&>40",
+          "value": "40",
+          "price": 53655
+        },
+        {
+          "id": "test-phone-refill<&>50",
+          "value": "50",
+          "price": 67069
+        },
+        {
+          "id": "test-phone-refill<&>60",
+          "value": "60",
+          "price": 80483
+        },
+        {
+          "id": "test-phone-refill<&>70",
+          "value": "70",
+          "price": 93897
+        },
+        {
+          "id": "test-phone-refill<&>80",
+          "value": "80",
+          "price": 107310
+        },
+        {
+          "id": "test-phone-refill<&>90",
+          "value": "90",
+          "price": 120724
+        },
+        {
+          "id": "test-phone-refill<&>100",
+          "value": "100",
+          "price": 134138
+        }
+      ]
+    },
+    {
+      "id": "test-gift-card-link",
+      "name": "Test Gift Card Link",
+      "base_name": "Test Gift Card Link",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "USD",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [],
+      "created_time": "2021-10-21T12:04:11.662Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "termsAndConditions": "You must comply, otherwise...",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "test-gift-card-link<&>Dinner for One",
+          "value": "Dinner for One",
+          "price": 26828,
+          "amount": 20
+        },
+        {
+          "id": "test-gift-card-link<&>Dinner for Two",
+          "value": "Dinner for Two",
+          "price": 53655,
+          "amount": 40
+        }
+      ]
+    },
+    {
+      "id": "ruler-syldavia",
+      "name": "Ruler Tester",
+      "base_name": "Ruler Tester",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "travel"
+      ],
+      "redemption_methods": [],
+      "created_time": "2025-10-28T02:31:46.774Z",
+      "recipient_type": "none",
+      "image": "this_is_a_test",
+      "in_stock": true,
+      "range": {
+        "min": 1,
+        "max": 100,
+        "step": 1,
+        "price_rate": 1439.1139663132203
+      },
+      "packages": [
+        {
+          "id": "ruler-syldavia<&>1",
+          "value": "1",
+          "price": 1440
+        },
+        {
+          "id": "ruler-syldavia<&>2",
+          "value": "2",
+          "price": 2879
+        },
+        {
+          "id": "ruler-syldavia<&>5",
+          "value": "5",
+          "price": 7196
+        },
+        {
+          "id": "ruler-syldavia<&>10",
+          "value": "10",
+          "price": 14392
+        },
+        {
+          "id": "ruler-syldavia<&>20",
+          "value": "20",
+          "price": 28783
+        },
+        {
+          "id": "ruler-syldavia<&>30",
+          "value": "30",
+          "price": 43174
+        },
+        {
+          "id": "ruler-syldavia<&>40",
+          "value": "40",
+          "price": 57565
+        },
+        {
+          "id": "ruler-syldavia<&>50",
+          "value": "50",
+          "price": 71956
+        },
+        {
+          "id": "ruler-syldavia<&>60",
+          "value": "60",
+          "price": 86347
+        },
+        {
+          "id": "ruler-syldavia<&>70",
+          "value": "70",
+          "price": 100738
+        },
+        {
+          "id": "ruler-syldavia<&>80",
+          "value": "80",
+          "price": 115130
+        },
+        {
+          "id": "ruler-syldavia<&>90",
+          "value": "90",
+          "price": 129521
+        },
+        {
+          "id": "ruler-syldavia<&>100",
+          "value": "100",
+          "price": 143912
+        }
+      ]
+    },
+    {
+      "id": "affiliate-tester",
+      "name": "Affiliate Tester",
+      "base_name": "Affiliate Tester",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [],
+      "created_time": "2021-08-25T14:55:57.700Z",
+      "recipient_type": "none",
+      "image": "testcorp",
+      "in_stock": true,
+      "range": {
+        "min": 5,
+        "max": 100,
+        "step": 0.01,
+        "price_rate": 1439.1139663132203
+      },
+      "packages": [
+        {
+          "id": "affiliate-tester<&>5",
+          "value": "5",
+          "price": 7196
+        },
+        {
+          "id": "affiliate-tester<&>10",
+          "value": "10",
+          "price": 14392
+        },
+        {
+          "id": "affiliate-tester<&>20",
+          "value": "20",
+          "price": 28783
+        },
+        {
+          "id": "affiliate-tester<&>30",
+          "value": "30",
+          "price": 43174
+        },
+        {
+          "id": "affiliate-tester<&>40",
+          "value": "40",
+          "price": 57565
+        },
+        {
+          "id": "affiliate-tester<&>50",
+          "value": "50",
+          "price": 71956
+        },
+        {
+          "id": "affiliate-tester<&>60",
+          "value": "60",
+          "price": 86347
+        },
+        {
+          "id": "affiliate-tester<&>70",
+          "value": "70",
+          "price": 100738
+        },
+        {
+          "id": "affiliate-tester<&>80",
+          "value": "80",
+          "price": 115130
+        },
+        {
+          "id": "affiliate-tester<&>90",
+          "value": "90",
+          "price": 129521
+        },
+        {
+          "id": "affiliate-tester<&>100",
+          "value": "100",
+          "price": 143912
+        }
+      ]
+    },
+    {
+      "id": "testcorp-syldavia",
+      "name": "testcorp-syldavia",
+      "base_name": "testcorp-syldavia",
+      "country_code": "KN",
+      "country_name": "St Kitts and Nevis",
+      "currency": "EUR",
+      "categories": [
+        "gifts"
+      ],
+      "redemption_methods": [],
+      "created_time": "2020-12-11T18:28:18.818Z",
+      "recipient_type": "none",
+      "image": "testcorp",
+      "in_stock": true,
+      "packages": [
+        {
+          "id": "testcorp-syldavia<&>OK",
+          "value": "OK",
+          "price": 16,
+          "amount": 0.01
+        },
+        {
+          "id": "testcorp-syldavia<&>1",
+          "value": "1",
+          "price": 76,
+          "amount": 0.05
+        },
+        {
+          "id": "testcorp-syldavia<&>2",
+          "value": "2",
+          "price": 152,
+          "amount": 0.1
+        },
+        {
+          "id": "testcorp-syldavia<&>3",
+          "value": "3",
+          "price": 303,
+          "amount": 0.2
+        },
+        {
+          "id": "testcorp-syldavia<&>4",
+          "value": "4",
+          "price": 454,
+          "amount": 0.3
+        },
+        {
+          "id": "testcorp-syldavia<&>5",
+          "value": "5",
+          "price": 605,
+          "amount": 0.4
+        },
+        {
+          "id": "testcorp-syldavia<&>6",
+          "value": "6",
+          "price": 756,
+          "amount": 0.5
+        },
+        {
+          "id": "testcorp-syldavia<&>7",
+          "value": "7",
+          "price": 907,
+          "amount": 0.6
+        },
+        {
+          "id": "testcorp-syldavia<&>8",
+          "value": "8",
+          "price": 1058,
+          "amount": 0.7
+        },
+        {
+          "id": "testcorp-syldavia<&>9",
+          "value": "9",
+          "price": 1209,
+          "amount": 0.8
+        },
+        {
+          "id": "testcorp-syldavia<&>10",
+          "value": "10",
+          "price": 1360,
+          "amount": 0.9
+        },
+        {
+          "id": "testcorp-syldavia<&>11",
+          "value": "11",
+          "price": 1512,
+          "amount": 1
+        },
+        {
+          "id": "testcorp-syldavia<&>12",
+          "value": "12",
+          "price": 1663,
+          "amount": 1.1
+        },
+        {
+          "id": "testcorp-syldavia<&>13",
+          "value": "13",
+          "price": 1814,
+          "amount": 1.2
+        },
+        {
+          "id": "testcorp-syldavia<&>14",
+          "value": "14",
+          "price": 1965,
+          "amount": 1.3
+        },
+        {
+          "id": "testcorp-syldavia<&>15",
+          "value": "15",
+          "price": 2116,
+          "amount": 1.4
+        },
+        {
+          "id": "testcorp-syldavia<&>16",
+          "value": "16",
+          "price": 2267,
+          "amount": 1.5
+        },
+        {
+          "id": "testcorp-syldavia<&>delay-forever",
+          "value": "delay-forever",
+          "price": 2418,
+          "amount": 1.6
+        },
+        {
+          "id": "testcorp-syldavia<&>delay-61s",
+          "value": "delay-61s",
+          "price": 2569,
+          "amount": 1.7
+        },
+        {
+          "id": "testcorp-syldavia<&>delay-11s",
+          "value": "delay-11s",
+          "price": 2720,
+          "amount": 1.8
+        },
+        {
+          "id": "testcorp-syldavia<&>delay-1s",
+          "value": "delay-1s",
+          "price": 2872,
+          "amount": 1.9
+        }
+      ]
+    }
+  ]
+}

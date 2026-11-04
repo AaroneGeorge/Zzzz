@@ -4,6 +4,7 @@
 import type { BridgeQuote, Invoice, Order, Product, ShieldedSend } from "../types";
 import type { PolicyGate } from "../policy";
 import type { AgentRun } from "./state";
+import type { Gateway } from "../gateway";
 
 export interface WalletLike {
   getAddress(): Promise<string>;
@@ -50,12 +51,16 @@ export interface AgentConfig {
   orderPollMs: number;
   confirmWaitMs: number;
   maxLlmTurns: number;
+  /** how long the gateway waits for a mined, matching payment before giving up (no order is placed) */
+  gatewayTimeoutMs?: number;
 }
 
 export interface AgentDeps {
   wallet: WalletLike;
   bitrefill: BitrefillLike;
   bridge: BridgeFn;
+  /** Merchant-side shielded payment gateway; defaults to an in-memory MockGateway when absent. */
+  gateway?: Gateway;
   /** Same gate instance must be shared by every run in the process (it holds per-run approvals). */
   policy: PolicyGate;
   onStep?: (run: AgentRun) => void;
@@ -84,6 +89,7 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
     orderPollMs: Number(env.ORDER_POLL_MS || 20_000),
     confirmWaitMs: Number(env.ZEC_CONFIRM_WAIT_MS || 600_000),
     maxLlmTurns: Number(env.AGENT_MAX_TURNS || 12),
+    gatewayTimeoutMs: env.GATEWAY_TIMEOUT_MS ? Number(env.GATEWAY_TIMEOUT_MS) : undefined,
   };
 }
 
@@ -97,6 +103,7 @@ export async function loadAdapters(env: Record<string, string | undefined> = pro
   wallet: WalletLike;
   bitrefill: BitrefillLike;
   bridge: BridgeFn;
+  gateway: Gateway;
   sources: NonNullable<AgentDeps["sources"]>;
   warnings: string[];
 }> {
@@ -131,5 +138,14 @@ export async function loadAdapters(env: Record<string, string | undefined> = pro
       warnings.push(`bridge: using fake (${(e as Error).message.split("\n")[0]})`);
     }
   }
-  return { wallet, bitrefill, bridge, sources, warnings };
+  const gw = await import(rel("../gateway/index.ts"));
+  let gateway: Gateway = new gw.MockGateway();
+  if (!force) {
+    try {
+      gateway = gw.createGateway(env);
+    } catch (e) {
+      warnings.push(`gateway: using mock (${(e as Error).message.split("\n")[0]})`);
+    }
+  }
+  return { wallet, bitrefill, bridge, gateway, sources, warnings };
 }

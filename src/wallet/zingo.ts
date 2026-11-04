@@ -158,6 +158,8 @@ export interface ZingoOptions {
   pollMs?: number;
   syncTimeoutMs?: number;
   syncPollMs?: number;
+  /** wallet data dir to lock across processes (default: the agent wallet dir when running the real CLI) */
+  lockDir?: string | null;
 }
 
 type SyncStatus = { scan_ranges?: Array<{ priority?: string; start_block?: string | number; end_block?: string | number }>; sync_start_height?: number };
@@ -197,6 +199,7 @@ export class ZingoWallet implements Wallet {
   private syncPollMs: number;
   /** Serialise sessions: zingo-cli owns the wallet file; two concurrent sessions would race. */
   private queue: Promise<unknown> = Promise.resolve();
+  private lockDir: string | null;
 
   constructor(opts: ZingoOptions = {}) {
     const env = process.env;
@@ -209,11 +212,14 @@ export class ZingoWallet implements Wallet {
     this.syncTimeoutMs = opts.syncTimeoutMs ?? 10 * 60_000;
     this.syncPollMs = opts.syncPollMs ?? 3_000;
     if (this.network !== "testnet") throw new WalletError("zingo adapter is wired for testnet only");
+    this.lockDir = opts.lockDir !== undefined ? opts.lockDir : opts.spawner ? null : env.ZINGO_DATA_DIR || join(APP_DIR, ".secrets", "zingo-testnet");
   }
 
   /** Run `fn` inside one REPL session (synced first unless nosync). */
   private session<T>(fn: (s: ZingoSession) => Promise<T>, { nosync = false } = {}): Promise<T> {
     const job = this.queue.then(async () => {
+      const release = this.lockDir ? await acquireLock(this.lockDir, this.sleepFn) : () => {};
+      try {
       const s = new ZingoSession([...this.cmd, ...(nosync ? ["--nosync"] : [])], this.spawner);
       try {
         if (!nosync) {
@@ -228,6 +234,9 @@ export class ZingoWallet implements Wallet {
         return await fn(s);
       } finally {
         await s.close();
+      }
+      } finally {
+        release();
       }
     });
     this.queue = job.catch(() => undefined);
@@ -298,5 +307,30 @@ export class ZingoWallet implements Wallet {
       out.push({ txid: n.txid, memo, amountZat: n.value, height: h ? Number(h[1]) : undefined });
     }
     return out;
+  }
+}
+
+/**
+ * Cross-process lock (mkdir is atomic): only one zingo-cli session may own a wallet dir, even when the web
+ * server and the CLI run at the same time. A lock older than 10 minutes is treated as stale.
+ */
+export async function acquireLock(dir: string, sleepFn: (ms: number) => Promise<void> = sleep, maxWaitMs = 15 * 60_000): Promise<() => void> {
+  const { mkdirSync, rmSync, statSync, existsSync } = await import("node:fs");
+  if (!existsSync(dir)) return () => {};
+  const lock = join(dir, ".zr-session.lock");
+  const deadline = Date.now() + maxWaitMs;
+  for (;;) {
+    try {
+      mkdirSync(lock);
+      return () => rmSync(lock, { recursive: true, force: true });
+    } catch {
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > 10 * 60_000) rmSync(lock, { recursive: true, force: true });
+      } catch {
+        /* vanished between calls */
+      }
+      if (Date.now() > deadline) throw new WalletError(`zingo wallet ${dir} is busy (another ZecRecharge process holds ${lock})`);
+      await sleepFn(1000);
+    }
   }
 }

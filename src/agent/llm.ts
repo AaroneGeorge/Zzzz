@@ -9,10 +9,10 @@ Read the request: the amount in rupees (₹239, Rs 500, INR 1,000, "500 rupees")
 Call the tools one at a time, in this order:
 1. search_products (query = the brand; for Amazon Pay use "Amazon")
 2. request_approval with the recommended product_id, the rupee amount and the category
-3. place_order with action "create"
-4. quote_bridge
+3. quote_bridge
+4. place_order with action "create" (the shielded payment gateway issues an invoice priced from the quote)
 5. pay_shielded with the invoice_id
-6. place_order with action "confirm"
+6. place_order with action "confirm" (the gateway first verifies the shielded payment with its viewing key; only then is the Bitrefill order placed. This can take a few minutes while the block is mined.)
 
 A policy gate in code checks every payment and order; you cannot change or skip it. If approval is denied or rejected, stop and tell the user why. If the request has no rupee amount, do not guess: stop and ask for it. If a tool fails, report the error; never invent ids.
 End with two or three short sentences: what was bought, the key ids, and each step's mode (real, test, quote, fixture, mock or manual). Never call a fixture, mock, test or quote a real payment.`;
@@ -50,7 +50,7 @@ export const TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "place_order",
-    description: "action 'create': create the Bitrefill invoice for the approved product. action 'confirm': after payment, fetch the order and its delivery.",
+    description: "action 'create': the shielded payment gateway issues an invoice (address, testnet amount, memo) for the approved product. action 'confirm': after pay_shielded, the gateway verifies the payment on chain with its viewing key, and only then the Bitrefill order is placed and its delivery fetched.",
     input_schema: {
       type: "object",
       properties: {
@@ -72,7 +72,7 @@ export const TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "pay_shielded",
-    description: "Send the shielded Zcash payment for the invoice. The memo ZR1|<invoice_id>|<policy_hash8> is set by code.",
+    description: "Send the shielded Zcash payment to the gateway's address for the gateway invoice. Amount and memo ZR1|<invoice_id>|<policy_hash8> are set by code.",
     input_schema: {
       type: "object",
       properties: { invoice_id: { type: "string" } },

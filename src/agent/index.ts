@@ -34,7 +34,7 @@ export async function runAgent(prompt: string, deps: AgentDeps & { runId?: strin
   return run;
 }
 
-/** The same six steps without an LLM: deterministic parse, then fixed tool order. */
+/** The same seven steps without an LLM: deterministic parse, then fixed tool order. */
 export async function runScripted(tools: AgentTools, prompt: string): Promise<void> {
   const run = tools.run;
   const p = parseRequest(prompt);
@@ -51,14 +51,15 @@ export async function runScripted(tools: AgentTools, prompt: string): Promise<vo
     phone: p.phone ?? undefined,
   });
   if (!a.approved) return;
-  const inv = await tools.place_order({ action: "create", product_id: s.recommended.product_id });
   try {
     await tools.quote_bridge({ amount_inr: p.amountInr });
   } catch (e) {
-    run.notes.push(`quote failed (non-fatal): ${(e as Error).message}`);
+    run.notes.push(`quote failed (non-fatal; fixed testnet price used): ${(e as Error).message}`);
   }
+  const inv = await tools.place_order({ action: "create", product_id: s.recommended.product_id });
   if (!("invoice" in inv)) return;
   await tools.pay_shielded({ invoice_id: inv.invoice.id });
+  // The gateway verifies the shielded payment (in code) before the Bitrefill order is placed.
   await tools.place_order({ action: "confirm", invoice_id: inv.invoice.id });
 }
 

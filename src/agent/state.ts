@@ -4,10 +4,11 @@ import type { Mode } from "./deps";
 export const STEP_DEFS = [
   { name: "search", title: "Search Bitrefill", tool: "search_products" },
   { name: "approve", title: "Policy gate", tool: "request_approval" },
-  { name: "invoice", title: "Create Bitrefill invoice", tool: "place_order(create)" },
   { name: "quote", title: "Quote ZEC → USDC (NEAR Intents)", tool: "quote_bridge" },
-  { name: "pay", title: "Shielded ZEC payment", tool: "pay_shielded" },
-  { name: "deliver", title: "Deliver order", tool: "place_order(confirm)" },
+  { name: "invoice", title: "Gateway invoice (shielded payment request)", tool: "place_order(create)" },
+  { name: "pay", title: "Shielded ZEC payment to the gateway", tool: "pay_shielded" },
+  { name: "verify", title: "Gateway verified shielded payment (viewing key)", tool: "place_order(confirm) → gateway" },
+  { name: "deliver", title: "Place Bitrefill order (only after verification)", tool: "place_order(confirm)" },
 ] as const;
 
 export type StepName = (typeof STEP_DEFS)[number]["name"];
@@ -22,6 +23,8 @@ export interface StepDetail {
   secret?: { label: string; value: string };
   data?: unknown;
   error?: string;
+  /** privacy facts shown as a checklist (gateway step) */
+  facts?: Array<{ label: string; holds: boolean }>;
 }
 
 export type RunStatus = "running" | "waiting_human" | "done" | "denied" | "rejected" | "failed";

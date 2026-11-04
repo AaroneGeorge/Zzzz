@@ -60,6 +60,7 @@
   .s-running .dot { border-color: var(--run); color: var(--run); box-shadow: 0 0 0 6px #fbbf2418; animation: pulse 1s infinite; }
   .s-skipped .dot { border-style: dashed; }
   .body { padding: 14px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); transition: border-color .3s; min-width: 0; }
+  .facts { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12.5px; } .facts li { margin: 2px 0; } .facts .yes { color: #6ee7b7; } .facts .no { color: #9ca3af; }
   .s-ok .body { border-color: #1f4d3b; } .s-failed .body { border-color: #5b2323; } .s-running .body { border-color: #5c4a12; }
   .s-pending .body, .s-skipped .body { opacity: .5; }
   .title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -200,6 +201,7 @@ function render(run) {
         ${dt.error ? `<div class="err">${esc(dt.error)}</div>` : ""}
         ${ids ? `<dl class="ids">${ids}</dl>` : ""}
         ${links ? `<div class="links">${links}</div>` : ""}
+        ${dt.facts ? `<ul class="facts">${dt.facts.map((f) => `<li class="${f.holds ? "yes" : "no"}">${f.holds ? "✓" : "✕"} ${esc(f.label)}</li>`).join("")}</ul>` : ""}
         ${secret}
       </div></li>`;
   }).join("");
@@ -229,7 +231,7 @@ async function loadPolicy() {
   const p = await (await fetch("/api/policy")).json();
   const c = p.config;
   $("#chips").innerHTML = [
-    ["agent", c.agentMode === "llm" ? `llm · ${c.model}` : "scripted"], ["bitrefill", c.bitrefillMode], ["wallet", c.walletKind], ["zcash", c.network],
+    ["agent", c.agentMode === "llm" ? `llm · ${c.model}` : "scripted"], ["bitrefill", c.bitrefillMode], ["wallet", c.walletKind], ["gateway", c.gateway === "ufvk" ? "view-only UFVK" : c.gateway === "wallet" ? "full wallet" : (c.gateway || "?")], ["zcash", c.network],
   ].map(([k, v]) => `<span class="chip">${k} <b>${esc(v)}</b></span>`).join("");
   const pct = Math.min(100, (p.spentTodayInr / p.dailyBudgetInr) * 100);
   const cats = Object.entries(p.byCategory).map(([k, v]) => {

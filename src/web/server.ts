@@ -117,7 +117,7 @@ const server = Bun.serve({
         ...deps.policy.status(),
         sources: deps.sources,
         warnings: deps.warnings,
-        config: { agentMode: cfg.agentMode, model: cfg.model, bitrefillMode: cfg.bitrefillMode, walletKind: cfg.walletKind, network: cfg.network },
+        config: { agentMode: cfg.agentMode, model: cfg.model, bitrefillMode: cfg.bitrefillMode, walletKind: cfg.walletKind, network: cfg.network, gateway: deps.gateway.view, gatewayAddress: deps.gateway.address },
       });
     }
     if (req.method === "GET" && p === "/api/runs") {
@@ -127,5 +127,5 @@ const server = Bun.serve({
   },
 });
 
-console.log(`ZecRecharge UI on http://localhost:${server.port}  (agent=${cfg.agentMode}, bitrefill=${cfg.bitrefillMode}, wallet=${cfg.walletKind}, sources=${JSON.stringify(deps.sources)})`);
+console.log(`ZecRecharge UI on http://localhost:${server.port}  (agent=${cfg.agentMode}, bitrefill=${cfg.bitrefillMode}, wallet=${cfg.walletKind}, gateway=${deps.gateway.view}, sources=${JSON.stringify(deps.sources)})`);
 for (const w of deps.warnings) console.log(`  note: ${w}`);

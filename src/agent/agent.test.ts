@@ -58,16 +58,17 @@ describe("parse (scripted mode)", () => {
 });
 
 describe("runAgent scripted", () => {
-  test("Jio ₹239: six OK steps, labelled modes, memo with policy hash, spend logged", async () => {
+  test("Jio ₹239: seven OK steps, labelled modes, memo with policy hash, spend logged", async () => {
     const { deps, wallet, gate, updates } = mkDeps();
     const run = await runAgent("Recharge +919999999999 with ₹239 Jio", deps);
     expect(run.status).toBe("done");
     expect(run.steps.map((s) => s.name)).toEqual(STEP_DEFS.map((d) => d.name));
     expect(run.steps.every((s) => s.status === "ok")).toBe(true);
     const modes = run.steps.map((s) => (s.detail as { mode?: string }).mode);
-    expect(modes).toEqual(["fixture", "real", "fixture", "fixture", "mock", "fixture"]);
+    expect(modes).toEqual(["fixture", "real", "fixture", "mock", "mock", "mock", "fixture"]);
     expect(wallet.sent).toHaveLength(1);
-    const inv = (run.steps[2]!.detail as { ids: Record<string, string> }).ids.invoice_id!;
+    const inv = (run.steps[3]!.detail as { ids: Record<string, string> }).ids.gateway_invoice!;
+    expect(inv).toMatch(/^zrg-/);
     expect(wallet.sent[0]!.memo).toBe(`ZR1|${inv}|${gate.hash8}`);
     expect(gate.status().spentTodayInr).toBe(239);
     expect(gate.ledger.entries().map((e) => e.kind)).toEqual(["decision", "spend"]);
@@ -172,7 +173,7 @@ const safeJson = (s: string) => {
 };
 
 describe("runAgent llm (fake model)", () => {
-  test("model-driven run produces the same six OK steps", async () => {
+  test("model-driven run produces the same seven OK steps", async () => {
     const { deps } = mkDeps();
     const model = scriptedModel([
       { name: "search_products", input: () => ({ query: "Jio", category: "mobile_topup", amount_inr: 239, phone: "+919999999999" }) },
@@ -222,5 +223,37 @@ describe("runAgent llm (fake model)", () => {
   test("tool schema list matches the five tools and dispatch rejects unknown tools", async () => {
     expect(TOOLS.map((t) => t.name).sort()).toEqual(["pay_shielded", "place_order", "quote_bridge", "request_approval", "search_products"]);
     await expect(dispatch({} as never, "transfer_all_funds", {})).rejects.toThrow(/unknown tool/);
+  });
+});
+
+describe("gateway gates the order", () => {
+  test("verification timeout: verify fails, no Bitrefill order is placed", async () => {
+    const { MockGateway } = await import("../gateway");
+    // a gateway at a different address never sees the agent's payment
+    const gw = new MockGateway();
+    const blind = Object.assign(Object.create(Object.getPrototypeOf(gw)), gw, { address: gw.address });
+    blind.waitForPayment = (inv: any) => MockGateway.prototype.waitForPayment.call(gw, inv, { timeoutMs: 50, sent: { txid: "x", amountZat: 1, memo: "nope", to: "elsewhere" } });
+    const { deps, bitrefill, wallet } = mkDeps({ gateway: blind });
+    const run = await runAgent("Recharge +919999999999 with ₹239 Jio", deps);
+    expect(wallet.sent).toHaveLength(1);
+    expect(run.steps.find((s) => s.name === "verify")!.status).toBe("failed");
+    const del = run.steps.find((s) => s.name === "deliver")!;
+    expect(del.status).toBe("skipped");
+    expect(JSON.stringify(del.detail)).toContain("NOT placed");
+    expect(bitrefill.invoices.size).toBe(0);
+    expect(run.status).toBe("failed");
+  });
+
+  test("order is created only after verification", async () => {
+    const { deps, bitrefill } = mkDeps();
+    const seen: string[] = [];
+    deps.onStep = (r) => {
+      const v = r.steps.find((s) => s.name === "verify")!.status;
+      if (bitrefill.invoices.size > 0) seen.push(v);
+    };
+    const run = await runAgent("₹239 Jio recharge +919999999999", deps);
+    expect(run.status).toBe("done");
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((v) => v === "ok")).toBe(true);
   });
 });
