@@ -47,6 +47,27 @@ export function parseIndianPhone(s: string): string | null {
   return m ? `+91${m[1]}${m[2]}` : null;
 }
 
+export const DEFAULT_PROMPT = "Recharge +919999999999 with ₹239 Jio";
+
+/** CLI args -> prompt. No prompt argument at all = the default demo request; an empty or blank one is a usage error. */
+export function promptFromArgs(args: string[]): { prompt: string } | { error: string } {
+  const words = args.filter((a) => !a.startsWith("--"));
+  if (words.length === 0) return { prompt: DEFAULT_PROMPT };
+  const prompt = words.join(" ").trim();
+  return prompt ? { prompt } : { error: "the request is empty" };
+}
+
+/** ZecRecharge is India-only (INR). Returns why a request looks non-Indian, or null. */
+export function nonIndianReason(prompt: string): string | null {
+  const cur = /([£$€¥])\s*\d|\b\d[\d,.]*\s*(usd|gbp|eur|dollars?|pounds?|euros?)\b|\b(usd|gbp|eur)\s*\d/i.exec(prompt);
+  if (cur) return `amount in ${cur[1] ?? cur[2] ?? cur[3]}, not rupees`;
+  const cc = /(?:^|[^\w+])\+(?!91)(\d{1,3})[\s-]?\d{3,}/.exec(prompt);
+  if (cc) return `phone number with country code +${cc[1]}, not +91`;
+  const place = /\b(uk|u\.k\.|united kingdom|britain|usa|u\.s\.a?\.?|united states|europe|canada|australia)\b/i.exec(prompt);
+  if (place) return `${place[1]} request`;
+  return null;
+}
+
 export function parseRequest(prompt: string): ParsedRequest {
   const amountInr = parseIndianAmount(prompt);
   const phone = parseIndianPhone(prompt);

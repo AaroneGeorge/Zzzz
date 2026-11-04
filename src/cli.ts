@@ -5,9 +5,17 @@ import { createInterface } from "node:readline/promises";
 import { FileLedger, DEFAULT_LEDGER_PATH } from "./policy";
 import { configFromEnv, createDefaultDeps, runAgent, type AgentRun, type StepDetail } from "./agent";
 
+import { promptFromArgs } from "./agent/parse";
+
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith("--")));
-const prompt = args.filter((a) => !a.startsWith("--")).join(" ").trim() || "Recharge +919999999999 with ₹239 Jio";
+const USAGE = 'usage: bun run demo -- [--yes|--no] [--json] [--reset-ledger] "Recharge +919999999999 with ₹239 Jio"';
+const parsedArgs = promptFromArgs(args);
+if ("error" in parsedArgs && !(flags.has("--reset-ledger") && args.length === 1)) {
+  console.error(`error: ${parsedArgs.error}\n${USAGE}`);
+  process.exit(2);
+}
+const prompt = "prompt" in parsedArgs ? parsedArgs.prompt : "";
 
 const TAGLINE = "Agent pays shielded ZEC to a viewing-key gateway; only a verified payment unlocks the Bitrefill order (testnet + Bitrefill test products)";
 
@@ -74,8 +82,14 @@ async function main() {
   const st = deps.policy.status();
   console.log(`\nrun ${run.id}: ${c("1", run.status.toUpperCase())} · ${okCount}/${run.steps.length} steps OK · budget ₹${st.spentTodayInr} spent, ₹${st.remainingInr} left today · ledger ${ledgerPath}`);
   if (run.error) console.log(c("31", `error: ${run.error}`));
+  if (run.status === "denied" || run.status === "rejected") {
+    const appr = run.steps.find((s) => s.name === "approve")?.detail as StepDetail | undefined;
+    const why = run.status === "denied" ? (appr?.summary ?? "DENIED by the policy gate").replace(/^DENIED:\s*/, "") : "a human rejected the purchase";
+    console.log(c("33", `${run.status === "denied" ? "Denied by the policy gate" : "Rejected"}: ${why}. Nothing was paid and no order was placed (expected outcome, exit 0).`));
+  }
   if (flags.has("--json")) console.log(JSON.stringify(run, null, 2));
-  process.exit(run.status === "done" ? 0 : 1);
+  // A denial or human rejection is the mandate working as designed, not a crash: exit 0. Only a failed run is an error.
+  process.exit(run.status === "failed" ? 1 : 0);
 }
 
 function printStep(r: AgentRun, name: string) {

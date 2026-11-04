@@ -1,13 +1,13 @@
 import { FileLedger, loadPolicy, PolicyGate, DEFAULT_LEDGER_PATH } from "../policy";
 import { configFromEnv, loadAdapters, type AgentConfig, type AgentDeps } from "./deps";
 import { runLlmLoop, type LlmClientLike } from "./llm";
-import { parseRequest } from "./parse";
+import { nonIndianReason, parseRequest } from "./parse";
 import { newRun, newRunId, type AgentRun } from "./state";
 import { AgentTools } from "./tools";
 
 export * from "./deps";
 export * from "./state";
-export { parseRequest } from "./parse";
+export { DEFAULT_PROMPT, nonIndianReason, parseRequest, promptFromArgs } from "./parse";
 export { AgentTools } from "./tools";
 
 /**
@@ -21,6 +21,9 @@ export async function runAgent(prompt: string, deps: AgentDeps & { runId?: strin
   tools.emit();
   try {
     if (cfg.agentMode === "llm") {
+      if (!deps.anthropic && !process.env.ANTHROPIC_API_KEY?.trim() && !process.env.ANTHROPIC_AUTH_TOKEN?.trim()) {
+        throw new Error("AGENT_MODE=llm needs ANTHROPIC_API_KEY (put it in .env). Without a key, use AGENT_MODE=scripted: same tools, same policy gate, no model. Nothing was spent.");
+      }
       await runLlmLoop(tools, prompt, deps.anthropic as LlmClientLike | undefined);
     } else {
       await runScripted(tools, prompt);
@@ -37,6 +40,8 @@ export async function runAgent(prompt: string, deps: AgentDeps & { runId?: strin
 /** The same seven steps without an LLM: deterministic parse, then fixed tool order. */
 export async function runScripted(tools: AgentTools, prompt: string): Promise<void> {
   const run = tools.run;
+  const foreign = nonIndianReason(prompt);
+  if (foreign) throw new Error(`India only (INR): ZecRecharge buys Indian recharges and gift cards priced in rupees (${foreign}). Nothing was spent.`);
   const p = parseRequest(prompt);
   run.parsed = p;
   run.notes.push(`[scripted] parsed: ${p.brand ?? "?"} · ${p.category} · ₹${p.amountInr ?? "?"}${p.phone ? ` · ${p.phone}` : ""}`);

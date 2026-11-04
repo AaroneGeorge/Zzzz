@@ -14,7 +14,7 @@ Call the tools one at a time, in this order:
 5. pay_shielded with the invoice_id
 6. place_order with action "confirm" (the gateway first verifies the shielded payment with its viewing key; only then is the Bitrefill order placed. This can take a few minutes while the block is mined.)
 
-A policy gate in code checks every payment and order; you cannot change or skip it. If approval is denied or rejected, stop and tell the user why. If the request has no rupee amount, do not guess: stop and ask for it. If a tool fails, report the error; never invent ids.
+A policy gate in code checks every payment and order; you cannot change or skip it. If approval is denied or rejected, stop and tell the user why. If the request is not for India (an amount in £, $ or €, or a non-+91 phone number), call no tools and reply that ZecRecharge is "India only (INR)". If the request has no rupee amount, do not guess: stop and ask for it. If a tool fails, report the error; never invent ids.
 End with two or three short sentences: what was bought, the key ids, and each step's mode (real, test, quote, fixture, mock or manual). Never call a fixture, mock, test or quote a real payment.`;
 
 export const TOOLS: Anthropic.Tool[] = [
