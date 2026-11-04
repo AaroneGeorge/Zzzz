@@ -1,6 +1,6 @@
 # Stadium submission: field-by-field paste sheet
 
-Placeholder left: `{{CONTINUING_LINK}}` (upstream issue, if we file one). Repo and video URLs are filled in. Length limits we know of: pitch 80 characters, privacy note 3,000 characters. Both are checked below.
+All fields are filled in. Length limits we know of: pitch 80 characters, privacy note 3,000 characters. Both are checked below.
 
 ## Project name
 ZecRecharge
@@ -51,7 +51,6 @@ This is testnet: the order is a free Bitrefill test product and the ZEC to USDC 
 ## 30-day next step
 Make settlement real on mainnet: shielded ZEC through NEAR Intents 1Click (and Zodl CrossPay where available) into USDC on Base at the Bitrefill invoice address, with under-payment and 15-minute invoice-expiry handling (our feedback items F20 and F21 in https://github.com/AaroneGeorge/Zzzz/blob/main/docs/bitrefill-feedback.md). Then a Telegram front-end ("recharge my Jio") behind the same mandate gate, and the gate released as a small library for other Zcash agents. Success: one real mainnet purchase with a published chain of ids (shielded txid, swap id, Bitrefill invoice and order).
 Repo: https://github.com/AaroneGeorge/Zzzz
-Upstream issue we may file: `{{CONTINUING_LINK}}`
 
 ## Demo video URL
 https://github.com/AaroneGeorge/Zzzz/releases/download/v1.0-demo/zecrecharge-demo.mp4
@@ -64,7 +63,7 @@ Hosted MCP `search-products` with a guest token (no account) for live catalogue 
 
 ## Invoice ID of a real purchase
 Bitrefill v2 invoice `0fb6f4db-6f80-4f76-8699-c4b5edf067f1` (order `6aeb326986d3593f50960265`, product `test-gift-card-code`, status `delivered`), placed 2026-11-04 18:54 IST right after the gateway verified shielded payment `0863ac3207142f08e974f28e03bd0f67f2587c12607db4267d628d40505fa93f`. Also, the run shown in the demo video: invoice `e09ab291-114b-4305-bd60-cc2cf3cffbd7` (order `6aeb4069580cd01e17773e31`, `test-gift-card-code`, `all_delivered`, 19:55 IST), placed after the gateway verified txid `981571a1…0b31`.
-Honest label: this is a free Bitrefill TEST product enabled on our account, paid with `payment_method=balance` on a 0-BTC balance. It is a real Bitrefill API order, not a real-money purchase. More test invoices are in docs/integration.md. The Bitrefill invoice id for the video run (txid `981571a1...`) is not recorded in the repo.
+Honest label: this is a free Bitrefill TEST product enabled on our account, paid with `payment_method=balance` on a 0-BTC balance. It is a real Bitrefill API order, not a real-money purchase. More test invoices are in docs/integration.md.
 
 ## Guardrails
 From `data/policy.json`, enforced in code inside the money-moving tools, not in the prompt:
