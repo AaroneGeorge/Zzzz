@@ -77,7 +77,8 @@ Make the settlement leg real on mainnet: shielded ZEC through NEAR Intents 1Clic
 3. **Verified live:** `POST /v2/invoices` returns `not_delivered`; only a re-fetch shows `all_delivered`, even for instant test products. Document the state machine or return the final state when `auto_pay` completes.
 4. **Verified live:** the docs path and reality differ: the balance endpoint is `/v2/accounts/balance`, and `/v2/account/balance` returns an Express HTML 404 instead of JSON.
 5. No ZEC payment method; we had to design around a bridge to `usdc_base` (F20), and a 15-minute invoice expiry is tight for bridged payments (F21). This is why the gateway is a stand-in.
-6. Guests cannot see test products, so there is no zero-human end-to-end test without a key (F13). MCP results are TOON text with no `structuredContent`, hard for a gate that must read prices in code (F7). Jio packages have no INR face value (F12).
+6. **Verified live:** `test-phone-refill` delivered all afternoon, then from 19:33 IST every identical request ended `permanent_failure` with no reason field, while the invoice still said `payment.status: "complete"`. Suggest documenting test-refill limits and adding a `failure_reason` to orders. (ZecRecharge shows this as "PAID · ORDER FAILED", never as done.)
+7. Guests cannot see test products, so there is no zero-human end-to-end test without a key (F13). MCP results are TOON text with no `structuredContent`, hard for a gate that must read prices in code (F7). Jio packages have no INR face value (F12).
 
 ## Tech stack
 Bun 1.4 and TypeScript; Anthropic SDK (Claude, optional LLM mode); Bitrefill MCP (guest) and REST v2; a viewing-key (UFVK) payment gateway; NEAR Intents 1Click API; zingo-cli (Docker) against a Zcash testnet lightwalletd; `@toon-format/toon`; plain HTML plus SSE web UI; JSONL audit ledger. MIT licence.
