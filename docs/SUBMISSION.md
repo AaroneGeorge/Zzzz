@@ -35,7 +35,7 @@ Runs with zero keys (`bun run demo`). Next: mainnet settlement and Telegram.
 - Hosted MCP and REST v2 with a real key in `test` mode: live product search; then a real v2 invoice with `payment_method=balance` and `auto_pay` for the free test products `test-phone-refill` and `test-gift-card-code`. Both went `delivered` in our runs, at zero cost.
 - The order is placed only after the gateway has verified the shielded payment, so the ZEC payment causes the purchase. The matched real product (for example `reliance-jio-india-bundles`) is shown but not bought.
 - Real-spend guard: real products need `BITREFILL_MODE=real` plus an explicit opt-in; we never used it.
-- Tool annotations (`destructiveHint`) informed the gate design. 22 documented rough edges with repros in `docs/bitrefill-feedback.md`.
+- We noted that Bitrefill MCP tools carry annotations (`destructiveHint`) a gate could use; this build does not read them. 22 documented rough edges with repros in `docs/bitrefill-feedback.md`.
 
 ## Privacy note (3,000 chars max)
 Goal: an agent that pays privately and within limits.
